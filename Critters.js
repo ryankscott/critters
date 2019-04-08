@@ -2,7 +2,7 @@
 // Globals
 const maxWidth = 800;
 const maxHeight = 600;
-const numberOfCritters = 50;
+const numberOfCritters = 200;
 const collisionDebug = true;
 let rendering = true;
 
@@ -14,52 +14,6 @@ const uuid = () => {
     return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
   });
   return u;
-};
-
-class Critter {
-  constructor() {
-    (this.id = uuid()),
-      (this.team = {
-        id: 1,
-        colour: "#00FFFF" // "#" + (((1 << 24) * Math.random()) | 0).toString(16)
-      }),
-      (this.position = {
-        x: Math.ceil(Math.random() * maxWidth),
-        y: Math.ceil(Math.random() * maxHeight)
-      }),
-      (this.speed = Math.ceil(Math.random() * 10)),
-      (this.direction = Math.floor(Math.random() * 7)), // N, NE, E, SE, S, SW, W, NW
-      (this.size = 2),
-      (this.determineNextPosition = () => determineNextCritterPosition(this)),
-      (this.move = () => {
-        this.position = this.determineNextPosition();
-      }),
-      (this.draw = () => {
-        const ctx = canvas.getContext("2d");
-        var circle = new Path2D();
-        circle.arc(this.position.x, this.position.y, this.size, 0, 2 * Math.PI);
-        ctx.fillStyle = this.team.colour;
-        ctx.fill(circle);
-
-        if (collisionDebug) {
-          let debugCircle = new Path2D();
-          debugCircle.arc(
-            this.position.x,
-            this.position.y,
-            this.size * 2,
-            0,
-            2 * Math.PI
-          );
-          ctx.fillStyle = "rgba(255,0,0,0.2)";
-          ctx.fill(debugCircle);
-        }
-      });
-  }
-}
-const state = {
-  cycle: 0,
-  critters: [],
-  critterDistances: []
 };
 
 // TODO: change to trig functions if we want more directions
@@ -167,6 +121,55 @@ const determineNextCritterPosition = critter => {
   }
 };
 
+const Critter = class {
+  constructor() {
+    this.id = uuid();
+    this.team = {
+      id: 1,
+      colour: "#00FFFF" // "#" + (((1 << 24) * Math.random()) | 0).toString(16)
+    };
+    this.position = {
+      x: Math.ceil(Math.random() * maxWidth),
+      y: Math.ceil(Math.random() * maxHeight)
+    };
+    this.speed = Math.ceil(Math.random() * 10);
+    this.direction = Math.floor(Math.random() * 7); // N, NE, E, SE, S, SW, W, NW
+    this.size = 2;
+  }
+
+  move() {
+    this.position = determineNextCritterPosition(this);
+  }
+
+  draw() {
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const circle = new Path2D();
+    circle.arc(this.position.x, this.position.y, this.size, 0, 2 * Math.PI);
+    ctx.fillStyle = this.team.colour;
+    ctx.fill(circle);
+
+    if (collisionDebug) {
+      const debugCircle = new Path2D();
+      debugCircle.arc(
+        this.position.x,
+        this.position.y,
+        this.size * 2,
+        0,
+        2 * Math.PI
+      );
+      ctx.fillStyle = "rgba(255,0,0,0.2)";
+      ctx.fill(debugCircle);
+    }
+  }
+};
+
+const state = {
+  cycle: 0,
+  critters: [],
+  critterDistances: []
+};
+
 const generateTick = () => {
   setInterval(() => {
     document.dispatchEvent(new Event("tick"));
@@ -183,11 +186,11 @@ const isCollision = (a, b) => {
   const dx = a.position.x - b.position.x;
   const dy = a.position.y - b.position.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
-  state.critterDistances.push({
+  /*state.critterDistances.push({
     id1: a.id,
     id2: b.id,
     distance
-  });
+  });*/
   return distance < Math.floor(a.size) + Math.floor(b.size);
 };
 
@@ -197,6 +200,7 @@ const detectCollisions = () => {
       if (isCollision(state.critters[i], state.critters[j])) {
         state.critters[i].team.colour = "#FF0000";
         state.critters[j].team.colour = "#FF0000";
+        // TODO: Work out who dies
       }
     }
   }
