@@ -2,9 +2,14 @@
 // Globals
 const maxWidth = 800;
 const maxHeight = 600;
-const numberOfCritters = 200;
+const numberOfCritters = 20;
 const collisionDebug = true;
 let rendering = true;
+
+const state = {
+  cycle: 0,
+  critters: []
+};
 
 const uuid = () => {
   let dt = new Date().getTime();
@@ -123,10 +128,11 @@ const determineNextCritterPosition = critter => {
 
 const Critter = class {
   constructor() {
+    const r = Math.random();
     this.id = uuid();
     this.team = {
-      id: 1,
-      colour: "#00FFFF" // "#" + (((1 << 24) * Math.random()) | 0).toString(16)
+      id: r > 0.5 ? 0 : 1,
+      colour: r > 0.5 ? "#00FFFF" : "#0F0FFF" // "#" + (((1 << 24) * Math.random()) | 0).toString(16)
     };
     this.position = {
       x: Math.ceil(Math.random() * maxWidth),
@@ -164,12 +170,6 @@ const Critter = class {
   }
 };
 
-const state = {
-  cycle: 0,
-  critters: [],
-  critterDistances: []
-};
-
 const generateTick = () => {
   setInterval(() => {
     document.dispatchEvent(new Event("tick"));
@@ -186,11 +186,6 @@ const isCollision = (a, b) => {
   const dx = a.position.x - b.position.x;
   const dy = a.position.y - b.position.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
-  /*state.critterDistances.push({
-    id1: a.id,
-    id2: b.id,
-    distance
-  });*/
   return distance < Math.floor(a.size) + Math.floor(b.size);
 };
 
@@ -200,7 +195,19 @@ const detectCollisions = () => {
       if (isCollision(state.critters[i], state.critters[j])) {
         state.critters[i].team.colour = "#FF0000";
         state.critters[j].team.colour = "#FF0000";
+
         // TODO: Work out who dies
+        const nearCritters = state.critters.filter(c => {
+          const xPos = c.position.x;
+          const yPos = c.position.y;
+          return (
+            Math.abs(xPos - state.critters[i].position.x) <= 5 &&
+            Math.abs(yPos - state.critters[i].position.y) <= 5
+          );
+        });
+        const z = _.groupBy(nearCritters, "team.id");
+
+        console.log(z);
       }
     }
   }
@@ -218,7 +225,7 @@ const handleTick = () => {
       c.move();
       c.draw();
     });
-    rendering = true; // false
+    rendering = false;
     state.cycle += 1;
     state.critterDistances = [];
   }
