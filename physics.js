@@ -14,16 +14,14 @@ const detectCollisions = () => {
   for (let i = 0; i < state.critters.length; i += 1) {
     for (let j = i + 1; j < state.critters.length; j += 1) {
       if (isCollision(state.critters[i], state.critters[j])) {
-        // state.critters[i].team.colour = '#FF0000';
-        // state.critters[j].team.colour = '#FF0000';
-
-        // TODO: Work out who dies
+        // Don't match on the same critter
+        // Find all critters in the collision
         const nearCritters = state.critters.filter((c) => {
           const xPos = c.position.x;
           const yPos = c.position.y;
           return (
-            Math.abs(xPos - state.critters[i].position.x) <= 5
-            && Math.abs(yPos - state.critters[i].position.y) <= 5
+            Math.abs(xPos - state.critters[i].position.x) <= globals.collisionRadius
+            && Math.abs(yPos - state.critters[i].position.y) <= globals.collisionRadius
           );
         });
 
@@ -34,7 +32,7 @@ const detectCollisions = () => {
           t in teams ? teams[t].push(c) : (teams[t] = [c]);
         });
 
-        // Determine the total "energy"
+        // Determine the total "energy" per team
         // TODO: This should really factor in the collision direction?
         let teamEnergies = Object.entries(teams).map((v, idx) => ({
           team: v[0],
@@ -45,14 +43,26 @@ const detectCollisions = () => {
         // Remove all critters from the "losing team"
         // TODO: support multiple teams
         if (teamEnergies.length > 1) {
-          console.log(`Team energies: ${JSON.stringify(teamEnergies)}`);
+          // Debug
+          if (globals.collisionDebug) {
+            const debugCircle = new Path2D();
+            debugCircle.arc(
+              state.critters[i].position.x,
+              state.critters[i].position.y,
+              10,
+              0,
+              2 * Math.PI,
+            );
+            globals.ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            globals.ctx.fill(debugCircle);
+          }
           const losingTeam = teamEnergies[1].team;
-          console.log(`Losing team: ${losingTeam}`);
-          const deadCritters = nearCritters.filter(c => (c.team.id = losingTeam));
-          console.log(`Dead critters:${JSON.stringify(deadCritters.map(c => c.team.id))}`);
+          const deadCritters = nearCritters.filter(c => c.team.id == losingTeam);
           const existingCritters = state.critters.filter(c => !deadCritters.includes(c));
           state.critters = existingCritters;
         }
+
+        // TODO: Change the direction of the "winning team"
       }
 
       //

@@ -8,7 +8,7 @@ const critter = class {
     const r = Math.random();
     this.team = {
       id: r > 0.5 ? 0 : 1,
-      colour: r > 0.5 ? '#00FFFF' : '#0F0FFF', // "#" + (((1 << 24) * Math.random()) | 0).toString(16)
+      colour: r > 0.5 ? '#00FFFF' : '#FFFF00', // "#" + (((1 << 24) * Math.random()) | 0).toString(16)
     };
     this.position = {
       x: Math.ceil(Math.random() * globals.canvas.width), // TODO: Use the global canvas?
