@@ -1,6 +1,7 @@
 const state = {
   cycle: 0,
-  critters: []
+  teams: [],
+  critters: {}
 };
 
 export { state };

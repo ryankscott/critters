@@ -41,11 +41,14 @@ window.onkeypress = () => {
 const handleTick = () => {
   if (globals.rendering) {
     clearCanvas();
-    state.critters.forEach(c => {
-      c.move();
-      c.draw();
-      detectCollisions();
-    });
+    for (const v of Object.values(state.critters)) {
+      v.map(c => {
+        c.move();
+        c.draw();
+        detectCollisions();
+      });
+    }
+
     drawScore();
     //   globals.rendering = false;
     state.cycle += 1;
@@ -55,24 +58,16 @@ const handleTick = () => {
 
 const drawScore = () => {
   // Split the nearby critters into teams
-  const teams = {};
-  state.critters.map(c => {
-    const t = c.team.id;
-    t in teams ? teams[t].push(c) : (teams[t] = [c]);
-  });
-
-  // Determine the total "energy" per team
-  // TODO: This should really factor in the collision direction?
-
-  let teamEnergies = Object.entries(teams).map((v, idx) => ({
-    team: v[0],
-    energy: v[1].reduce((acc, cv) => acc + cv.size * cv.speed, 0)
-  }));
-  teamEnergies = teamEnergies.sort((a, b) => a.energy < b.energy);
-
-  let scores = [];
+  const teamEnergies = {};
+  for (const key in state.critters) {
+    teamEnergies[key] = state.critters[key].reduce(
+      (acc, cv) => acc + cv.size * cv.speed,
+      0
+    );
+  }
+  const scores = [];
   for (let i = 0; i < globals.numberOfTeams; i++) {
-    scores.push(`Team ${i}:   ${teamEnergies[i].energy}`);
+    scores.push(`Team ${i}:   ${teamEnergies[i]}`);
   }
 
   globals.ctx.font = "14px sans-serif";
@@ -111,15 +106,15 @@ const colours = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00"];
 // Assume direction is a value between 0 and 2*PI
 /*
                  pi/2
-                  | 
+                  |
            1      |     3
-                  |  
+                  |
  pi     ----------|---------- 0
                   |
             2     |     0
                   |
                 3*pi/2
-            
+
   */
 
 const determineTeamDirections = numberOfTeams => {
@@ -154,12 +149,13 @@ document.onreadystatechange = () => {
   if (document.readyState === "complete") {
     const teamDirection = determineTeamDirections(globals.numberOfTeams);
     for (let i = 0; i < globals.numberOfTeams; i++) {
+      state.critters[i] = [];
       const t = new team(
         i, // id
         colours[i], // colour
         Math.ceil(10 * Math.random()), // group size
         teamDirection[i], // team direction
-        Math.PI, // conflict direction
+        teamDirection[i] - Math.PI * Math.random(), // conflict direction
         Math.random(), // aggression
         Math.random(), // respawn
         2 + Math.ceil(10 * Math.random()), // critter speed

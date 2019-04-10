@@ -41,10 +41,9 @@ const team = class {
     // Number of groups in each axis
     const groupsInXY = Math.ceil(Math.sqrt(this.totalGroups));
 
-    //Number of critters in each group axis
+    // Number of critters in each group axis
     const crittersInXY = Math.ceil(Math.sqrt(this.groupSize));
 
-    //
     const numberOfPixelsInXGroup = (endX - startX) / groupsInXY;
     const numberOfPixelsInYGroup = (endY - startY) / groupsInXY;
 
@@ -59,10 +58,10 @@ const team = class {
       for (let x = 0; x < crittersInXY; x++) {
         for (let y = 0; y < crittersInXY; y++) {
           const xPos =
-            startX +
-            0.5 * numberOfPixelsInXGroup +
-            xCell * numberOfPixelsInXGroup +
-            this.critterSpacing * (numberOfPixelsInXGroup / crittersInXY) * x;
+            startX + // start of the teams area
+            xCell * numberOfPixelsInXGroup + // Get the start of the cell
+            0.5 * numberOfPixelsInXGroup + // Start at the middle of the cell
+            this.critterSpacing * (numberOfPixelsInXGroup / crittersInXY) * x; // Add spacing between critters
           const yPos =
             startY +
             0.5 * numberOfPixelsInYGroup +
@@ -86,7 +85,7 @@ const team = class {
         this.critterSpeed,
         this.critterSize
       );
-      state.critters.push(x);
+      state.critters[this.id].push(x);
     }
   }
 };

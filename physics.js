@@ -2,12 +2,16 @@
 import { state } from "./state.js";
 import { globals } from "./main.js";
 
-const isCollision = (a, b) => {
+const areCrittersNear = (a, b, threshold) => {
   const dx = a.position.x - b.position.x;
   const dy = a.position.y - b.position.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
 
-  return distance < Math.floor(a.size) + Math.floor(b.size);
+  return distance < Math.floor(a.size) + Math.floor(b.size) + threshold;
+};
+
+const determineCrittersInARadius = (critter, radius) => {
+  return state.critters.filter(c => areCrittersNear(c, critter, radius));
 };
 
 const determineEnergyInCollision = (
@@ -25,33 +29,56 @@ const determineEnergyInCollision = (
   return (critterSize * critterSpeed) / distanceFromCollision ** 2;
 };
 
+const splitCrittersIntoTeams = critters => {
+  const teams = {};
+  critters.map(c => {
+    const t = c.team.id;
+    t in teams ? teams[t].push(c) : (teams[t] = [c]);
+  });
+  return teams;
+};
+
 const detectCollisions = () => {
   for (let i = 0; i < state.critters.length; i += 1) {
     for (let j = i + 1; j < state.critters.length; j += 1) {
-      if (isCollision(state.critters[i], state.critters[j])) {
+      // If we're near a collision
+      if (areCrittersNear(state.critters[i], state.critters[j], 10)) {
+        const nearCritters = determineCrittersInARadius(state.critters[i], 20);
+        const teams = splitCrittersIntoTeams(nearCritters);
+        // Determine the total "energy" per team
+        let teamEnergies = Object.entries(teams).map((v, idx) => ({
+          team: v[0],
+          energy: v[1].reduce((acc, cv) => {
+            return acc + cv.size * cv.speed;
+          }, 0)
+        }));
+
+        teamEnergies = teamEnergies.sort((a, b) => a.energy < b.energy);
+        if (teamEnergies.length > 1) {
+          const losingTeam = teamEnergies[1].team;
+          state.critters.map(c => {
+            if (nearCritters.includes(c) && c.team.id == losingTeam.id) {
+              debugger;
+              var currentDirection = c.direction;
+              c.direction = c.collisionDirection;
+              c.collisionDirection = currentDirection;
+            }
+          });
+        }
+      }
+
+      if (areCrittersNear(state.critters[i], state.critters[j], 0)) {
         // Don't match on the same critter
         // Find all critters in the collision
-        const nearCritters = state.critters.filter(c => {
-          const xPos = c.position.x;
-          const yPos = c.position.y;
-          return (
-            Math.abs(xPos - state.critters[i].position.x) <=
-              globals.collisionRadius &&
-            Math.abs(yPos - state.critters[i].position.y) <=
-              globals.collisionRadius
-          );
-        });
+        const nearCritters = determineCrittersInARadius(
+          state.critters[i],
+          globals.collisionRadius
+        );
 
         // Split the nearby critters into teams
-        const teams = {};
-        nearCritters.map(c => {
-          const t = c.team.id;
-          t in teams ? teams[t].push(c) : (teams[t] = [c]);
-        });
+        const teams = splitCrittersIntoTeams(nearCritters);
 
         // Determine the total "energy" per team
-        // TODO: This should really factor in the collision direction?
-
         let teamEnergies = Object.entries(teams).map((v, idx) => ({
           team: v[0],
           energy: v[1].reduce(
@@ -69,7 +96,7 @@ const detectCollisions = () => {
         teamEnergies = teamEnergies.sort((a, b) => a.energy < b.energy);
 
         // Remove all critters from the "losing team"
-        // TODO: support multiple teams
+        // TODO: support multiple team collisions
         if (teamEnergies.length > 1) {
           // Debug
           if (globals.collisionDebug) {
