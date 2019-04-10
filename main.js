@@ -1,7 +1,7 @@
+/* eslint-disable import/extensions */
 import { state } from './state.js';
-import { critter } from './critter.js';
 import { detectCollisions } from './physics.js';
-import { team } from './team.js';
+import Team from './team.js';
 
 // TODO: Collision behaviour
 // TODO: Better layouts (e.g. hex, pentagon, circle, square, random etc.)
@@ -38,41 +38,43 @@ window.onkeypress = () => {
   globals.rendering = true;
 };
 
+const drawScore = () => {
+  const teamEnergies = {};
+  Object.keys(state.critters).forEach((key) => {
+    teamEnergies[key] = state.critters[key].reduce(
+      (acc, cv) => acc + cv.size * cv.speed,
+      0,
+    );
+  });
+  const scores = [];
+  for (let i = 0; i < globals.numberOfTeams; i += 1) {
+    scores.push(`Team ${i}:   ${teamEnergies[i]}`);
+  }
+  globals.ctx.font = '14px sans-serif';
+  globals.ctx.fillStyle = '#FFFFFF';
+  scores.forEach((s, idx) => {
+    globals.ctx.fillText(s, globals.canvasWidth - 100, 20 + 20 * idx);
+  });
+};
+
 const handleTick = () => {
   if (globals.rendering) {
     clearCanvas();
-    for (const v of Object.values(state.critters)) {
-      v.map((c) => {
+    Object.values(state.critters).forEach((v) => {
+      v.forEach((c) => {
         c.move();
         c.draw();
         detectCollisions();
       });
-    }
+    });
 
     drawScore();
-    //   globals.rendering = false;
+    globals.rendering = false;
     state.cycle += 1;
     state.critterDistances = [];
   }
 };
 
-const drawScore = () => {
-  // Split the nearby critters into teams
-  const teamEnergies = {};
-  for (const key in state.critters) {
-    teamEnergies[key] = state.critters[key].reduce((acc, cv) => acc + cv.size * cv.speed, 0);
-  }
-  const scores = [];
-  for (let i = 0; i < globals.numberOfTeams; i++) {
-    scores.push(`Team ${i}:   ${teamEnergies[i]}`);
-  }
-
-  globals.ctx.font = '14px sans-serif';
-  globals.ctx.fillStyle = '#FFFFFF';
-  scores.map((s, idx) => {
-    globals.ctx.fillText(s, globals.canvasWidth - 100, 20 + 20 * idx);
-  });
-};
 
 // Debug handling
 canvas.addEventListener(
@@ -87,7 +89,8 @@ canvas.addEventListener(
         && Math.ceil(c.position.y) > y - 5
         && Math.ceil(c.position.y) < y + 5,
     );
-    clickedCritters.map((c) => {
+    clickedCritters.forEach((c) => {
+      // eslint-disable-next-line no-param-reassign
       c.team.colour = '#00FF00';
       c.draw();
     });
@@ -114,7 +117,7 @@ const colours = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00'];
 const determineTeamDirections = (numberOfTeams) => {
   const teamDirections = {};
   // Split the entire direction in to number of teams fractions
-  for (let i = 0; i < numberOfTeams; i++) {
+  for (let i = 0; i < numberOfTeams; i += 1) {
     switch (i % 4) {
       case 0:
         teamDirections[i] = 1.5 * Math.PI + 0.5 * Math.PI * Math.random();
@@ -142,9 +145,9 @@ const determineTeamDirections = (numberOfTeams) => {
 document.onreadystatechange = () => {
   if (document.readyState === 'complete') {
     const teamDirection = determineTeamDirections(globals.numberOfTeams);
-    for (let i = 0; i < globals.numberOfTeams; i++) {
+    for (let i = 0; i < globals.numberOfTeams; i += 1) {
       state.critters[i] = []; // TODO: Fix this
-      const t = new team(
+      const t = new Team(
         i, // id
         colours[i], // colour
         Math.ceil(10 * Math.random()), // group size

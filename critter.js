@@ -1,8 +1,9 @@
-import { uuid } from "./uuid.js";
-import { detectCollisions, determineNextCritterPosition } from "./physics.js";
-import { globals } from "./main.js";
+/* eslint-disable import/extensions */
+import { uuid } from './uuid.js';
+import { detectCollisions, determineNextCritterPosition } from './physics.js';
+import { globals } from './main.js';
 
-const critter = class {
+const Critter = class {
   constructor(team, position, direction, conflictDirection, speed, size) {
     this.id = uuid();
     this.team = team;
@@ -18,7 +19,7 @@ const critter = class {
       this.position.x,
       this.position.y,
       this.speed,
-      this.direction
+      this.direction,
     );
   }
 
@@ -30,4 +31,4 @@ const critter = class {
   }
 };
 
-export { critter };
+export default Critter;

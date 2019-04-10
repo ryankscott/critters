@@ -1,4 +1,5 @@
 /* eslint-disable no-mixed-operators */
+/* eslint-disable import/extensions */
 import { state } from './state.js';
 import { globals } from './main.js';
 
@@ -10,7 +11,13 @@ const areCrittersNear = (a, b, radius) => {
   return distance < Math.floor(a.size) + Math.floor(b.size) + 2 * radius;
 };
 
-const determineCrittersInRadius = (initialCritter, critterList, radius, team = state.teams) => critterList.filter(c => areCrittersNear(initialCritter, c, radius) && team.includes(c.team.id));
+const determineCrittersInRadius = (
+  initialCritter,
+  critterList,
+  radius,
+) => critterList.filter(
+  c => areCrittersNear(initialCritter, c, radius),
+);
 
 const determineEnergyInCollision = (
   critterSize,
@@ -20,23 +27,113 @@ const determineEnergyInCollision = (
 ) => {
   // Assume that power decreases based on inverse square
   const distanceFromCollision = Math.sqrt(
-    (collisionPosition.x - critterPosition.x) ** 2 + (collisionPosition.y - critterPosition.y) ** 2,
+    (collisionPosition.x - critterPosition.x) ** 2
+      + (collisionPosition.y - critterPosition.y) ** 2,
   );
-
+  if (distanceFromCollision == 0) {
+    return 0;
+  }
   return (critterSize * critterSpeed) / distanceFromCollision ** 2;
 };
 
-const splitCrittersIntoTeams = (critters) => {
-  const teams = {};
-  critters.map((c) => {
-    const t = c.team.id;
-    t in teams ? teams[t].push(c) : (teams[t] = [c]);
-  });
-  return teams;
-};
-
 const detectCollisions = () => {
+  // TODO: Simplify this
+
   // Start with one team
+  Object.keys(state.critters).forEach((k) => {
+    const firstTeamCritters = state.critters[k];
+
+    // Take a copy, delete the current team and flatten
+    let otherTeamsCritters = { ...state.critters };
+    delete otherTeamsCritters[k];
+    otherTeamsCritters = Object.values(otherTeamsCritters).flat();
+
+    const collidedCritters = [];
+    for (let i = 0; i < firstTeamCritters.length; i += 1) {
+      for (let j = 0; j < otherTeamsCritters.length; j += 1) {
+        if (
+          areCrittersNear(
+            firstTeamCritters[i],
+            otherTeamsCritters[j],
+            globals.collisionRadius,
+          )
+        ) {
+          if (globals.collisionDebug) {
+            const debugCircle = new Path2D();
+            debugCircle.arc(
+              firstTeamCritters[i].position.x,
+              firstTeamCritters[i].position.y,
+              10,
+              0,
+              2 * Math.PI,
+            );
+            globals.ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            globals.ctx.fill(debugCircle);
+          }
+          collidedCritters.push({
+            firstTeamCritter: firstTeamCritters[i],
+            otherTeamsCritter: otherTeamsCritters[i],
+          });
+        }
+      }
+    }
+
+    // Find all critters in the collision
+    for (let i = 0; i < collidedCritters.length; i += 1) {
+      const nearOtherTeamsCritters = determineCrittersInRadius(
+        collidedCritters[i].otherTeamsCritter,
+        otherTeamsCritters,
+        globals.collisionRadius,
+      );
+
+      const nearFirstTeamCritters = determineCrittersInRadius(
+        collidedCritters[i].firstTeamCritter,
+        firstTeamCritters,
+        globals.collisionRadius,
+        [collidedCritters[i].firstTeamCritter.team],
+      );
+
+      // Determine the total "energy" per team
+      const nearFirstTeamCritterEnergy = nearFirstTeamCritters.reduce(
+        (acc, cv) => acc
+          + determineEnergyInCollision(
+            cv.size,
+            cv.speed,
+            cv.position,
+            collidedCritters[i].firstTeamCritter.position,
+          ),
+        0,
+      );
+
+      const nearOtherTeamsCritterEnergy = nearOtherTeamsCritters.reduce(
+        (acc, cv) => acc
+          + determineEnergyInCollision(
+            cv.size,
+            cv.speed,
+            cv.position,
+            collidedCritters[i].otherTeamsCritter.position,
+          ),
+        0,
+      );
+
+      if (nearOtherTeamsCritterEnergy > nearFirstTeamCritterEnergy) {
+        const firstTeam = firstTeamCritters[i].team.id;
+        const allFirstTeamCritters = state.critters[firstTeam];
+        allFirstTeamCritters.filter(c => !nearFirstTeamCritters.includes(c));
+        state.critters[firstTeam] = allFirstTeamCritters;
+      }
+
+      if (nearOtherTeamsCritterEnergy < nearFirstTeamCritterEnergy) {
+        const otherTeam = otherTeamsCritters[i].team.id;
+        let allOtherTeamsCritters = { ...state.critters };
+        delete allOtherTeamsCritters[otherTeam];
+        allOtherTeamsCritters = Object.values(allOtherTeamsCritters).flat();
+
+        allOtherTeamsCritters.filter(c => !nearOtherTeamsCritters.includes(c));
+        state.critters[otherTeam] = allOtherTeamsCritters;
+      }
+    }
+  });
 };
 // Loop over all the critters in other teams
 // Detect if there's a collision

@@ -1,9 +1,9 @@
-import { uuid } from "./uuid.js";
-import { critter } from "./critter.js";
-import { globals } from "./main.js";
-import { state } from "./state.js";
+/* eslint-disable import/extensions */
+import Critter from './critter.js';
+import { globals } from './main.js';
+import { state } from './state.js';
 
-const team = class {
+const Team = class {
   constructor(
     id,
     colour,
@@ -14,7 +14,7 @@ const team = class {
     respawnRate,
     critterSpeed,
     critterSize,
-    critterSpacing
+    critterSpacing,
   ) {
     this.id = id;
     this.colour = colour;
@@ -27,7 +27,7 @@ const team = class {
     this.critterSize = critterSize;
     this.critterSpacing = critterSpacing;
     this.totalCritters = Math.ceil(
-      500 / (this.critterSpeed * this.critterSize)
+      500 / (this.critterSpeed * this.critterSize),
     );
     this.totalGroups = Math.ceil(this.totalCritters / this.groupSize);
   }
@@ -51,22 +51,20 @@ const team = class {
     for (let i = 0; i < this.totalGroups; i++) {
       // Randomly pick a cell to start off in
       // TODO: Fix if it's already a populated cell
-      let xCell = Math.floor(Math.random() * groupsInXY);
-      let yCell = Math.floor(Math.random() * groupsInXY);
+      const xCell = Math.floor(Math.random() * groupsInXY);
+      const yCell = Math.floor(Math.random() * groupsInXY);
 
       // Start with a naive approach
       for (let x = 0; x < crittersInXY; x++) {
         for (let y = 0; y < crittersInXY; y++) {
-          const xPos =
-            startX + // start of the teams area
-            xCell * numberOfPixelsInXGroup + // Get the start of the cell
-            0.5 * numberOfPixelsInXGroup + // Start at the middle of the cell
-            this.critterSpacing * (numberOfPixelsInXGroup / crittersInXY) * x; // Add spacing between critters
-          const yPos =
-            startY +
-            0.5 * numberOfPixelsInYGroup +
-            yCell * numberOfPixelsInYGroup +
-            this.critterSpacing * (numberOfPixelsInXGroup / crittersInXY) * y;
+          const xPos = startX // start of the teams area
+            + xCell * numberOfPixelsInXGroup // Get the start of the cell
+            + 0.5 * numberOfPixelsInXGroup // Start at the middle of the cell
+            + this.critterSpacing * (numberOfPixelsInXGroup / crittersInXY) * x; // Add spacing between critters
+          const yPos = startY
+            + 0.5 * numberOfPixelsInYGroup
+            + yCell * numberOfPixelsInYGroup
+            + this.critterSpacing * (numberOfPixelsInXGroup / crittersInXY) * y;
           critterPositions.push({ x: xPos, y: yPos });
         }
       }
@@ -76,18 +74,18 @@ const team = class {
 
   generateCritters() {
     const critterPositions = this.determineCritterPositions();
-    for (let i = 0; i < this.totalCritters; i++) {
-      const x = new critter(
+    for (let i = 0; i < this.totalCritters; i += 1) {
+      const x = new Critter(
         this,
         critterPositions.pop(),
         this.direction,
         this.conflictDirection,
         this.critterSpeed,
-        this.critterSize
+        this.critterSize,
       );
       state.critters[this.id].push(x);
     }
   }
 };
 
-export { team };
+export default Team;
