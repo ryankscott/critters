@@ -1,7 +1,8 @@
 /* eslint-disable import/extensions */
 import { state } from './state.js';
 import { detectCollisions } from './physics.js';
-import Team from './team.js';
+import Species from './species.js';
+import { randomColour } from './colours.js';
 
 // TODO: Collision behaviour
 // TODO: Better layouts (e.g. hex, pentagon, circle, square, random etc.)
@@ -10,11 +11,19 @@ import Team from './team.js';
 // Inputting of parameters
 
 // Globals
+const generateName = async () => {
+  const response = await fetch('http://faker.hook.io?property=name.findName&locale=en');
+  const json = await response.json();
+  const speciesName = await JSON.stringify(json);
+  return speciesName;
+};
+
+
 const canvas = document.getElementById('canvas');
 const globals = {
-  numberOfTeams: 2,
+  numberOfSpecies: 2,
   collisionDebug: true,
-  collisionRadius: 5,
+  collisionRadius: 2,
   rendering: true,
   canvas,
   ctx: canvas.getContext('2d'),
@@ -22,6 +31,7 @@ const globals = {
   canvasWidth: canvas.width,
   canvasOffsetLeft: canvas.offsetLeft,
   canvasOffsetTop: canvas.offsetTop,
+  totalSpeciesEnergy: 1000,
 };
 
 const generateTick = () => {
@@ -39,39 +49,27 @@ window.onkeypress = () => {
 };
 
 const drawScore = () => {
-  const teamEnergies = {};
-  Object.keys(state.critters).forEach((key) => {
-    teamEnergies[key] = state.critters[key].reduce(
-      (acc, cv) => acc + cv.size * cv.speed,
-      0,
-    );
-  });
-  const scores = [];
-  for (let i = 0; i < globals.numberOfTeams; i += 1) {
-    scores.push(`Team ${i}:   ${teamEnergies[i]}`);
-  }
-  globals.ctx.font = '14px sans-serif';
-  globals.ctx.fillStyle = '#FFFFFF';
-  scores.forEach((s, idx) => {
-    globals.ctx.fillText(s, globals.canvasWidth - 100, 20 + 20 * idx);
+  state.species.forEach((t, idx) => {
+    const scoreString = `${t.name}: ${t.getScore()}`;
+    globals.ctx.font = '14px sans-serif';
+    globals.ctx.fillStyle = t.colour;
+    globals.ctx.fillText(scoreString, globals.canvasWidth - 250, 20 + 20 * idx);
   });
 };
 
 const handleTick = () => {
   if (globals.rendering) {
     clearCanvas();
-    Object.values(state.critters).forEach((v) => {
-      v.forEach((c) => {
+    state.species.forEach((v) => {
+      v.critters.forEach((c) => {
         c.move();
         c.draw();
-        detectCollisions();
       });
+      detectCollisions();
     });
-
     drawScore();
-    globals.rendering = false;
+    // globals.rendering = false;
     state.cycle += 1;
-    state.critterDistances = [];
   }
 };
 
@@ -91,14 +89,12 @@ canvas.addEventListener(
     );
     clickedCritters.forEach((c) => {
       // eslint-disable-next-line no-param-reassign
-      c.team.colour = '#00FF00';
+      c.species.colour = '#00FF00';
       c.draw();
     });
   },
   false,
 );
-
-const colours = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00'];
 
 // Assume direction is a value between 0 and 2*PI
 /*
@@ -114,53 +110,56 @@ const colours = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00'];
 
   */
 
-const determineTeamDirections = (numberOfTeams) => {
-  const teamDirections = {};
-  // Split the entire direction in to number of teams fractions
-  for (let i = 0; i < numberOfTeams; i += 1) {
+const determineSpeciesDirections = (numberOfSpecies) => {
+  const speciesDirections = {};
+  // Split the entire direction in to number of species fractions
+  for (let i = 0; i < numberOfSpecies; i += 1) {
     switch (i % 4) {
       case 0:
-        teamDirections[i] = 1.5 * Math.PI + 0.5 * Math.PI * Math.random();
+        speciesDirections[i] = 1.5 * Math.PI + 0.5 * Math.PI * Math.random();
         break;
 
       case 1:
-        teamDirections[i] = 0.5 * Math.PI + 0.5 * Math.PI * Math.random();
+        speciesDirections[i] = 0.5 * Math.PI + 0.5 * Math.PI * Math.random();
         break;
 
       case 2:
-        teamDirections[i] = 1 * Math.PI + Math.PI * Math.random();
+        speciesDirections[i] = 1 * Math.PI + Math.PI * Math.random();
         break;
 
       case 3:
-        teamDirections[i] = 0 * Math.PI + 0.5 * Math.PI * Math.random();
+        speciesDirections[i] = 0 * Math.PI + 0.5 * Math.PI * Math.random();
         break;
 
       default:
         break;
     }
   }
-  return teamDirections;
+  return speciesDirections;
 };
 
-document.onreadystatechange = () => {
+document.onreadystatechange = async () => {
   if (document.readyState === 'complete') {
-    const teamDirection = determineTeamDirections(globals.numberOfTeams);
-    for (let i = 0; i < globals.numberOfTeams; i += 1) {
-      state.critters[i] = []; // TODO: Fix this
-      const t = new Team(
+    const speciesDirection = determineSpeciesDirections(globals.numberOfSpecies);
+    for (let i = 0; i < globals.numberOfSpecies; i += 1) {
+      const s = new Species(
         i, // id
-        colours[i], // colour
+        await generateName(), // name
+        randomColour(), // colour
         Math.ceil(10 * Math.random()), // group size
-        teamDirection[i], // team direction
-        teamDirection[i] - Math.PI * Math.random(), // conflict direction
+        speciesDirection[i], //  direction
+        speciesDirection[i] + Math.PI, // conflict direction
         Math.random(), // aggression
         Math.random(), // respawn
-        2 + Math.ceil(10 * Math.random()), // critter speed
-        Math.ceil(2 * Math.random()), // critter size
+        2 + Math.ceil(8 * Math.random()), // critter speed
+        1 + Math.ceil(2 * Math.random()), // critter size
         Math.random(), // critter spacing
+        5 + Math.ceil(Math.random() * 5), // scaredRadius,
+        5 + Math.ceil(Math.random() * 10), // safetyRadius,
+        1 + Math.ceil(Math.random() * 2), // safetyNumber,
       );
-      t.generateCritters();
-      state.teams.push(t);
+      s.generateCritters();
+      state.species.push(s);
     }
     // Create clock
     generateTick();

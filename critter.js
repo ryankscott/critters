@@ -2,16 +2,27 @@
 import { uuid } from './uuid.js';
 import { detectCollisions, determineNextCritterPosition } from './physics.js';
 import { globals } from './main.js';
+import { lightenHexColour } from './colours.js';
 
 const Critter = class {
-  constructor(team, position, direction, conflictDirection, speed, size) {
+  constructor(
+    species,
+    position,
+    direction,
+    conflictDirection,
+    speed,
+    size,
+    scared,
+  ) {
     this.id = uuid();
-    this.team = team;
+    this.species = species;
     this.position = position;
     this.direction = direction;
     this.conflictDirection = conflictDirection;
     this.speed = speed;
     this.size = size;
+    this.scared = scared;
+    this.energy = this.speed * this.size;
   }
 
   move() {
@@ -26,7 +37,7 @@ const Critter = class {
   draw() {
     const circle = new Path2D();
     circle.arc(this.position.x, this.position.y, this.size, 0, 2 * Math.PI);
-    globals.ctx.fillStyle = this.team.colour;
+    globals.ctx.fillStyle = this.species.colour;
     globals.ctx.fill(circle);
   }
 };
