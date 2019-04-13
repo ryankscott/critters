@@ -154,9 +154,10 @@ document.onreadystatechange = async () => {
         2 + Math.ceil(8 * Math.random()), // critter speed
         1 + Math.ceil(2 * Math.random()), // critter size
         Math.random(), // critter spacing
-        5 + Math.ceil(Math.random() * 5), // scaredRadius,
-        5 + Math.ceil(Math.random() * 10), // safetyRadius,
-        1 + Math.ceil(Math.random() * 2), // safetyNumber,
+        5 + Math.ceil(Math.random() * 10), // scaredRadius,
+        5 + Math.ceil(Math.random() * 5), // safetyRadius,
+        5 + Math.ceil(Math.random() * 5), // scaredSafetyNumber,
+        2 + Math.ceil(Math.random() * 3), // calmSafetyNumber,
       );
       s.generateCritters();
       state.species.push(s);

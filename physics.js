@@ -11,7 +11,7 @@ const determineEnergyInCollision = (
   collisionPosition,
 ) => {
   let dist = Math.sqrt((critterPosition.x - collisionPosition.x) ** 2 + (critterPosition.y - collisionPosition.y));
-  if (dist < 0.05) { dist = 1; } // TODO: Fix me
+  if (dist < 1) { dist = 1; } // TODO: Fix me
   return (critterSize * critterSpeed) / (dist ** 2);
 };
 
@@ -20,23 +20,21 @@ const detectCollisions = () => {
 
   // Start with one species
   state.species.forEach((t, idx) => {
-    const otherSpecies = state.species.slice(idx + 1, state.species.length);
-
     // Loop over scared critters in each species
     const currentlyScaredCritters = t.getScaredCritters();
     currentlyScaredCritters.forEach((c) => {
-      const closeCritters = t.getCrittersInRegion(c.position, t.safeRadius);
+      const closeCritters = t.getCrittersInRegion(c.position, t.safetyRadius);
       const closeCalmCritters = closeCritters.filter(cc => !cc.scared);
       // If there's more than X critters nearby they will become calm again
-      if (closeCalmCritters.length > t.safetyNumber) {
-        c.direction = closeCalmCritters[0].direction;
-        c.conflictDirection = closeCalmCritters[0].conflictDirection;
-        c.scared = false;
+      if ((closeCalmCritters.length > t.calmSafetyNumber) || (closeCritters.length > t.scaredSafetyNumber)) {
+        c.direction = t.direction;
+        c.collisionDirection = t.collisionDirection;
       }
     });
 
 
     // Loop over the critters in the first species
+    const otherSpecies = state.species.slice(idx + 1, state.species.length); // TODO: this is wrong, for idx > 0
     t.critters.forEach((c) => {
       // Get near collisions
       const currentSpeciesScaredCritters = t.getCrittersInRegion(c.position, t.scaredRadius);

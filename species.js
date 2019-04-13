@@ -19,7 +19,8 @@ const Species = class {
     critterSpacing,
     scaredRadius,
     safetyRadius,
-    safetyNumber,
+    calmSafetyNumber,
+    scaredSafetyNumber,
   ) {
     this.id = id;
     this.name = name;
@@ -38,7 +39,8 @@ const Species = class {
     this.totalGroups = Math.ceil(this.totalCritters / this.groupSize);
     this.scaredRadius = scaredRadius;
     this.safetyRadius = safetyRadius;
-    this.safetyNumber = safetyNumber;
+    this.calmSafetyNumber = calmSafetyNumber;
+    this.scaredSafetyNumber = scaredSafetyNumber;
   }
 
   determineCritterPositions() {
