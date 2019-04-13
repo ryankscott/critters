@@ -12,7 +12,7 @@ import { randomColour } from './colours.js';
 
 // Globals
 const generateName = async () => {
-  const response = await fetch('http://faker.hook.io?property=name.findName&locale=en');
+  const response = await fetch('https://faker.hook.io?property=name.findName&locale=en');
   const json = await response.json();
   const speciesName = await JSON.stringify(json);
   return speciesName;
@@ -144,7 +144,7 @@ document.onreadystatechange = async () => {
     for (let i = 0; i < globals.numberOfSpecies; i += 1) {
       const s = new Species(
         i, // id
-        await generateName(), // name
+        `Team ${i + 1}`, // name
         randomColour(), // colour
         Math.ceil(10 * Math.random()), // group size
         speciesDirection[i], //  direction
