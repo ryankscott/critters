@@ -4,15 +4,20 @@ import { state } from './state.js';
 import { globals } from './main.js';
 
 
+/**
+ * Determine the energy that a single critter provides in a collision
+ * @param  {number} critterSize
+ * @param  {number} critterSpeed
+ * @param  {} critterPosition
+ * @param  {} collisionPosition
+ */
 const determineEnergyInCollision = (
-  critterSize,
-  critterSpeed,
-  critterPosition,
+  critter,
   collisionPosition,
 ) => {
-  let dist = Math.sqrt((critterPosition.x - collisionPosition.x) ** 2 + (critterPosition.y - collisionPosition.y));
+  let dist = Math.sqrt((critter.position.x - collisionPosition.x) ** 2 + (critter.position.y - collisionPosition.y));
   if (dist < 1) { dist = 1; } // TODO: Fix me
-  return (critterSize * critterSpeed) / (dist ** 2);
+  return (critter.size * (critter.speed ** 2)) / (dist ** 2);
 };
 
 const detectCollisions = () => {
@@ -29,6 +34,8 @@ const detectCollisions = () => {
       if ((closeCalmCritters.length > t.calmSafetyNumber) || (closeCritters.length > t.scaredSafetyNumber)) {
         c.direction = t.direction;
         c.collisionDirection = t.collisionDirection;
+        c.speed = t.critterSpeed;
+        c.scared = false;
       }
     });
 
@@ -51,11 +58,13 @@ const detectCollisions = () => {
           if (otherSpeciesScaredEnergy > currentSpeciesScaredEnergy) {
             state.species[idx].critters.map((c) => {
               if (currentSpeciesScaredCritters.includes(c)) {
-                if (c.scared == false) {
+                // When scared critters go to their conflict direction, and go at 80% speed
+                if (c.scared === false) {
                   const prevDirection = c.direction;
                   c.direction = c.conflictDirection;
                   c.conflictDirection = prevDirection;
                   c.scared = true;
+                  c.speed = Math.floor(c.speed * 0.8);
                 }
               }
               return c;
@@ -66,11 +75,13 @@ const detectCollisions = () => {
             const otherSpeciesID = otherSpecies[index].id;
             state.species[otherSpeciesID].critters.map((cs) => {
               if (o.includes(cs)) {
-                if (cs.scared == false) {
+                // When scared critters go to their conflict direction, and go at 80% speed
+                if (cs.scared === false) {
                   const prevDirection = cs.direction;
                   cs.direction = cs.conflictDirection;
                   cs.conflictDirection = prevDirection;
                   cs.scared = true;
+                  cs.speed = Math.floor(cs.speed * 0.8);
                 }
               }
               return cs;
@@ -97,18 +108,17 @@ const detectCollisions = () => {
             state.species[otherSpeciesIdx].critters = state.species[otherSpeciesIdx].critters.filter(el => !o.includes(el));
           }
 
-          if (globals.collisionDebug) {
-            const debugCircle = new Path2D();
-            debugCircle.arc(
-              c.position.x,
-              c.position.y,
-              5,
-              0,
-              2 * Math.PI,
-            );
-            globals.ctx.fillStyle = 'rgba(255,255,255,0.6)';
-            globals.ctx.fill(debugCircle);
-          }
+          // Draw a collision circle
+          const collisionCircle = new Path2D();
+          collisionCircle.arc(
+            c.position.x,
+            c.position.y,
+            5,
+            0,
+            2 * Math.PI,
+          );
+          globals.ctx.fillStyle = 'rgba(255,255,255,0.6)';
+          globals.ctx.fill(collisionCircle);
         }
       });
     });

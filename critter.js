@@ -22,7 +22,7 @@ const Critter = class {
     this.speed = speed;
     this.size = size;
     this.scared = scared;
-    this.energy = this.speed * this.size;
+    this.age = 0;
   }
 
   move() {
@@ -37,7 +37,7 @@ const Critter = class {
   draw() {
     const circle = new Path2D();
     circle.arc(this.position.x, this.position.y, this.size, 0, 2 * Math.PI);
-    globals.ctx.fillStyle = this.species.colour;
+    globals.ctx.fillStyle = this.scared ? chroma(this.species.colour).brighten(2).hex() : this.species.colour;
     globals.ctx.fill(circle);
   }
 };

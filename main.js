@@ -2,7 +2,6 @@
 import { state } from './state.js';
 import { detectCollisions } from './physics.js';
 import Species from './species.js';
-import { randomColour } from './colours.js';
 
 // TODO: Collision behaviour
 // TODO: Better layouts (e.g. hex, pentagon, circle, square, random etc.)
@@ -21,8 +20,8 @@ const generateName = async () => {
 
 const canvas = document.getElementById('canvas');
 const globals = {
-  numberOfSpecies: 2,
-  collisionDebug: true,
+  numberOfSpecies: 4,
+  debug: true,
   collisionRadius: 2,
   rendering: true,
   canvas,
@@ -57,6 +56,21 @@ const drawScore = () => {
   });
 };
 
+const drawSpeciesParameters = () => {
+  globals.ctx.font = '14px sans-serif';
+  globals.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+  const metricsOfInterest = ['name', 'groupSize', 'critterSpeed', 'critterSize', 'respawnRate', 'scaredRadius', 'safetyRadius', 'calmSafetyNumber', 'scaredSafetyNumber', 'maxAge'];
+  state.species.forEach((t, idx) => {
+    let metricsDrawn = 0;
+    Object.entries(t).forEach((e) => {
+      if (metricsOfInterest.includes(e[0])) {
+        globals.ctx.fillText(e.join(': '), 0, 150 * idx + 14 * metricsDrawn);
+        metricsDrawn += 1;
+      }
+    });
+  });
+};
+
 const handleTick = () => {
   if (globals.rendering) {
     clearCanvas();
@@ -66,8 +80,12 @@ const handleTick = () => {
         c.draw();
       });
       detectCollisions();
+      v.respawnCritters();
+      v.ageCritters();
+      v.killOldCritters();
     });
     drawScore();
+    drawSpeciesParameters();
     // globals.rendering = false;
     state.cycle += 1;
   }
@@ -138,19 +156,22 @@ const determineSpeciesDirections = (numberOfSpecies) => {
   return speciesDirections;
 };
 
+const generateColours = () => chroma.scale(['yellow', '008ae5']).colors(globals.numberOfSpecies);
+
 document.onreadystatechange = async () => {
   if (document.readyState === 'complete') {
     const speciesDirection = determineSpeciesDirections(globals.numberOfSpecies);
+    const colours = generateColours();
     for (let i = 0; i < globals.numberOfSpecies; i += 1) {
       const s = new Species(
         i, // id
         `Team ${i + 1}`, // name
-        randomColour(), // colour
-        Math.ceil(10 * Math.random()), // group size
+        colours.pop(), // colour
+        Math.ceil(50 * Math.random()), // group size
         speciesDirection[i], //  direction
         speciesDirection[i] + Math.PI, // conflict direction
         Math.random(), // aggression
-        Math.random(), // respawn
+        Math.random() * 0.05, // respawn
         2 + Math.ceil(8 * Math.random()), // critter speed
         1 + Math.ceil(2 * Math.random()), // critter size
         Math.random(), // critter spacing
@@ -158,6 +179,7 @@ document.onreadystatechange = async () => {
         5 + Math.ceil(Math.random() * 5), // safetyRadius,
         5 + Math.ceil(Math.random() * 5), // scaredSafetyNumber,
         2 + Math.ceil(Math.random() * 3), // calmSafetyNumber,
+        50000 + Math.ceil(Math.random() * 20000), // maxAge
       );
       s.generateCritters();
       state.species.push(s);

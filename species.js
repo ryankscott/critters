@@ -21,6 +21,7 @@ const Species = class {
     safetyRadius,
     calmSafetyNumber,
     scaredSafetyNumber,
+    maxAge,
   ) {
     this.id = id;
     this.name = name;
@@ -41,6 +42,32 @@ const Species = class {
     this.safetyRadius = safetyRadius;
     this.calmSafetyNumber = calmSafetyNumber;
     this.scaredSafetyNumber = scaredSafetyNumber;
+    this.maxAge = maxAge;
+  }
+
+  respawnCritters() {
+    if (Math.random() < this.respawnRate) {
+      const randomCritter = this.critters[Math.floor(Math.random() * this.critters.length)];
+      // TODO: Only get non-scared critters
+      const respawnPosition = { x: randomCritter.position.x + Math.ceil((Math.random() - 0.5) * 50), y: randomCritter.position.y + Math.ceil((Math.random() - 0.5) * 50) };
+      this.critters.push(new Critter(
+        this,
+        respawnPosition,
+        this.direction,
+        this.conflictDirection,
+        this.critterSpeed,
+        this.critterSize,
+        false,
+      ));
+    }
+  }
+
+  ageCritters() {
+    this.critters.map(c => c.age += 1);
+  }
+
+  killOldCritters() {
+    this.critters = this.critters.filter(c => c.age < (this.maxAge * Math.random() * 0.9));
   }
 
   determineCritterPositions() {
@@ -117,7 +144,7 @@ const Species = class {
 
   getEnergyInRegion(position, radius) {
     const collisionCritters = this.getCrittersInRegion(position, radius);
-    return collisionCritters.reduce((acc, cv) => (determineEnergyInCollision(cv.size, cv.speed, cv.position, position)), 0);
+    return collisionCritters.reduce((acc, cv) => (determineEnergyInCollision(cv, position)), 0);
   }
 
   getScaredCritters() {
