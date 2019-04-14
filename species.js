@@ -3,7 +3,25 @@ import Critter from './critter.js';
 import { globals } from './main.js';
 import { state } from './state.js';
 import { determineEnergyInCollision } from './physics.js';
-
+/**
+ *
+ * @param  {number} id - a unique identifier
+ * @param  {string} name - species name
+ * @param  {string} colour - a colour string that will be used for critters
+ * @param  {number} groupSize - the maximum number of critters in a group
+ * @param  {number} direction - the direction a critter travels
+ * @param  {number} scaredDirection - the direction a critter turns when scared
+ * @param  {number} aggression
+ * @param  {number} respawnRate - how frequently are new critters created (0 - 1)
+ * @param  {number} critterSpeed -the speed of each critter
+ * @param  {number} critterSize - the size of each critter (integer)
+ * @param  {number} critterSpacing - the distance around each critter in a group (integer)
+ * @param  {number} scaredRadius - the distance around a critter that's checked for enemy critters to determine if it's scared (integer)
+ * @param  {number} safetyRadius - the distance around a critter that's checked for critters to determine if it's safe (integer)
+ * @param  {number} calmSafetyNumber - the number of calm critters in a radius before it's considered safe
+ * @param  {number} scaredSafetyNumber - the number of scared critters in a radius before it's considered safe
+ * @param  {number} maxAge - the number of cycles before a critter dies (integer)
+ */
 const Species = class {
   constructor(
     id,
@@ -11,7 +29,7 @@ const Species = class {
     colour,
     groupSize,
     direction,
-    conflictDirection,
+    scaredDirection,
     aggression,
     respawnRate,
     critterSpeed,
@@ -28,7 +46,7 @@ const Species = class {
     this.colour = colour;
     this.groupSize = groupSize;
     this.direction = direction;
-    this.conflictDirection = conflictDirection;
+    this.scaredDirection = scaredDirection;
     this.aggression = aggression;
     this.respawnRate = respawnRate;
     this.critterSpeed = critterSpeed;
@@ -46,6 +64,9 @@ const Species = class {
   }
 
   respawnCritters() {
+    if (this.critters.length == 0) {
+      return;
+    }
     if (Math.random() < this.respawnRate) {
       const randomCritter = this.critters[Math.floor(Math.random() * this.critters.length)];
       // TODO: Only get non-scared critters
@@ -54,7 +75,7 @@ const Species = class {
         this,
         respawnPosition,
         this.direction,
-        this.conflictDirection,
+        this.scaredDirection,
         this.critterSpeed,
         this.critterSize,
         false,
@@ -118,7 +139,7 @@ const Species = class {
         this,
         critterPositions.pop(),
         this.direction,
-        this.conflictDirection,
+        this.scaredDirection,
         this.critterSpeed,
         this.critterSize,
         false,
@@ -128,6 +149,10 @@ const Species = class {
     this.critters = critters;
   }
 
+  /**
+   * @param  {{x: number, y: number}} position - the position that critters will be searched from
+   * @param  {number} radius - the radius which will be searched for critters
+   */
   getCrittersInRegion(position, radius) {
     return this.critters.filter((c) => {
       const dx = c.position.x - position.x;

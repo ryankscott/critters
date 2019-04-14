@@ -10,17 +10,9 @@ import Species from './species.js';
 // Inputting of parameters
 
 // Globals
-const generateName = async () => {
-  const response = await fetch('https://faker.hook.io?property=name.findName&locale=en');
-  const json = await response.json();
-  const speciesName = await JSON.stringify(json);
-  return speciesName;
-};
-
-
 const canvas = document.getElementById('canvas');
 const globals = {
-  numberOfSpecies: 4,
+  numberOfSpecies: 2,
   debug: true,
   collisionRadius: 2,
   rendering: true,
@@ -30,7 +22,7 @@ const globals = {
   canvasWidth: canvas.width,
   canvasOffsetLeft: canvas.offsetLeft,
   canvasOffsetTop: canvas.offsetTop,
-  totalSpeciesEnergy: 1000,
+  totalSpeciesEnergy: 2000,
 };
 
 const generateTick = () => {
@@ -59,12 +51,12 @@ const drawScore = () => {
 const drawSpeciesParameters = () => {
   globals.ctx.font = '14px sans-serif';
   globals.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  const metricsOfInterest = ['name', 'groupSize', 'critterSpeed', 'critterSize', 'respawnRate', 'scaredRadius', 'safetyRadius', 'calmSafetyNumber', 'scaredSafetyNumber', 'maxAge'];
+  const metricsOfInterest = ['name', 'groupSize', 'critterSpeed', 'critterSize', 'critterSpacing', 'respawnRate', 'scaredRadius', 'safetyRadius', 'calmSafetyNumber', 'scaredSafetyNumber', 'maxAge'];
   state.species.forEach((t, idx) => {
     let metricsDrawn = 0;
     Object.entries(t).forEach((e) => {
       if (metricsOfInterest.includes(e[0])) {
-        globals.ctx.fillText(e.join(': '), 0, 150 * idx + 14 * metricsDrawn);
+        globals.ctx.fillText(e.join(': '), 0, 14 + 175 * idx + 14 * metricsDrawn);
         metricsDrawn += 1;
       }
     });
@@ -128,10 +120,10 @@ canvas.addEventListener(
 
   */
 
-const determineSpeciesDirections = (numberOfSpecies) => {
+const determineSpeciesDirections = () => {
   const speciesDirections = {};
   // Split the entire direction in to number of species fractions
-  for (let i = 0; i < numberOfSpecies; i += 1) {
+  for (let i = 0; i < globals.numberOfSpecies; i += 1) {
     switch (i % 4) {
       case 0:
         speciesDirections[i] = 1.5 * Math.PI + 0.5 * Math.PI * Math.random();
@@ -160,9 +152,11 @@ const generateColours = () => chroma.scale(['yellow', '008ae5']).colors(globals.
 
 document.onreadystatechange = async () => {
   if (document.readyState === 'complete') {
-    const speciesDirection = determineSpeciesDirections(globals.numberOfSpecies);
+    const speciesDirection = determineSpeciesDirections();
     const colours = generateColours();
     for (let i = 0; i < globals.numberOfSpecies; i += 1) {
+      const size = 4 - Math.ceil((Math.random() * 2));
+      const groupSize = Math.ceil(50 * Math.random());
       const s = new Species(
         i, // id
         `Team ${i + 1}`, // name
@@ -172,13 +166,13 @@ document.onreadystatechange = async () => {
         speciesDirection[i] + Math.PI, // conflict direction
         Math.random(), // aggression
         Math.random() * 0.05, // respawn
-        2 + Math.ceil(8 * Math.random()), // critter speed
-        1 + Math.ceil(2 * Math.random()), // critter size
-        Math.random(), // critter spacing
-        5 + Math.ceil(Math.random() * 10), // scaredRadius,
-        5 + Math.ceil(Math.random() * 5), // safetyRadius,
-        5 + Math.ceil(Math.random() * 5), // scaredSafetyNumber,
-        2 + Math.ceil(Math.random() * 3), // calmSafetyNumber,
+        10 - size, // critter speed
+        size, // critter size
+        2 * Math.random(), // critter spacing
+        3 * size + Math.ceil(Math.random() * 5), // scaredRadius,
+        1 * size + Math.ceil(Math.random() * 5), // safetyRadius,
+        Math.ceil(groupSize * 0.2), // scaredSafetyNumber,
+        Math.ceil(groupSize * 0.1), // calmSafetyNumber,
         50000 + Math.ceil(Math.random() * 20000), // maxAge
       );
       s.generateCritters();

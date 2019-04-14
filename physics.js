@@ -6,10 +6,8 @@ import { globals } from './main.js';
 
 /**
  * Determine the energy that a single critter provides in a collision
- * @param  {number} critterSize
- * @param  {number} critterSpeed
- * @param  {} critterPosition
- * @param  {} collisionPosition
+ * @param  {{}} critter - the critter who's energy you want to find
+ * @param  {{x: number, y:number}} collisionPosition - position where the collision occurred
  */
 const determineEnergyInCollision = (
   critter,
@@ -17,7 +15,7 @@ const determineEnergyInCollision = (
 ) => {
   let dist = Math.sqrt((critter.position.x - collisionPosition.x) ** 2 + (critter.position.y - collisionPosition.y));
   if (dist < 1) { dist = 1; } // TODO: Fix me
-  return (critter.size * (critter.speed ** 2)) / (dist ** 2);
+  return (critter.size * critter.speed) / (dist ** 2);
 };
 
 const detectCollisions = () => {
@@ -61,8 +59,8 @@ const detectCollisions = () => {
                 // When scared critters go to their conflict direction, and go at 80% speed
                 if (c.scared === false) {
                   const prevDirection = c.direction;
-                  c.direction = c.conflictDirection;
-                  c.conflictDirection = prevDirection;
+                  c.direction = c.scaredDirection;
+                  c.scaredDirection = prevDirection;
                   c.scared = true;
                   c.speed = Math.floor(c.speed * 0.8);
                 }
@@ -78,8 +76,8 @@ const detectCollisions = () => {
                 // When scared critters go to their conflict direction, and go at 80% speed
                 if (cs.scared === false) {
                   const prevDirection = cs.direction;
-                  cs.direction = cs.conflictDirection;
-                  cs.conflictDirection = prevDirection;
+                  cs.direction = cs.scaredDirection;
+                  cs.scaredDirection = prevDirection;
                   cs.scared = true;
                   cs.speed = Math.floor(cs.speed * 0.8);
                 }

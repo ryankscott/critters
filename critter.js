@@ -9,7 +9,7 @@ const Critter = class {
     species,
     position,
     direction,
-    conflictDirection,
+    scaredDirection,
     speed,
     size,
     scared,
@@ -18,7 +18,7 @@ const Critter = class {
     this.species = species;
     this.position = position;
     this.direction = direction;
-    this.conflictDirection = conflictDirection;
+    this.scaredDirection = scaredDirection;
     this.speed = speed;
     this.size = size;
     this.scared = scared;
