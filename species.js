@@ -64,10 +64,11 @@ const Species = class {
   }
 
   respawnCritters() {
-    if (this.critters.length == 0) {
+    if (this.critters.length === 0) {
       return;
     }
-    if (Math.random() < this.respawnRate) {
+    const newCritters = Math.floor(this.critters.length * (1 - Math.E ** (-this.respawnRate * state.cycle)));
+    for (let index = 0; index < newCritters; index += 1) {
       const randomCritter = this.critters[Math.floor(Math.random() * this.critters.length)];
       // TODO: Only get non-scared critters
       const respawnPosition = { x: randomCritter.position.x + Math.ceil((Math.random() - 0.5) * 50), y: randomCritter.position.y + Math.ceil((Math.random() - 0.5) * 50) };
@@ -76,20 +77,34 @@ const Species = class {
         respawnPosition,
         this.direction,
         this.scaredDirection,
-        this.critterSpeed,
-        this.critterSize,
+        Math.random() < 0.001 ? this.critterSpeed * 1.5 : this.critterSpeed, // Mutations
+        this.critterSize < 0.001 ? this.critterSize * 1.5 : this.critterSize, // Mutations
         false,
       ));
     }
   }
+
 
   ageCritters() {
     this.critters.map(c => c.age += 1);
   }
 
   killOldCritters() {
-    this.critters = this.critters.filter(c => c.age < (this.maxAge * Math.random() * 0.9));
+    this.critters = this.critters.filter((c) => {
+      const likelihood = (1 - Math.E ** (-(c.age / 10000000) * state.cycle));
+      return Math.random() > likelihood;
+    });
   }
+
+  /*
+   y = C e-kt, k > 0
+
+    Features
+      Asymptotic to y = 0 to right
+      Passes through (0,C)
+      C is the initial value
+      Decreasing, but bounded below by y=0
+    */
 
   determineCritterPositions() {
     const startX = this.id * (globals.canvasWidth / globals.numberOfSpecies);
@@ -158,7 +173,7 @@ const Species = class {
       const dx = c.position.x - position.x;
       const dy = c.position.y - position.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      return distance < (Math.floor(c.size) + (2 * radius));
+      return distance < (Math.floor(c.size) + (radius));
     });
   }
 

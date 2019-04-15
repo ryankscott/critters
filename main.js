@@ -5,7 +5,6 @@ import Species from './species.js';
 
 // TODO: Collision behaviour
 // TODO: Better layouts (e.g. hex, pentagon, circle, square, random etc.)
-// Respawn
 // Game start / end
 // Inputting of parameters
 
@@ -14,7 +13,7 @@ const canvas = document.getElementById('canvas');
 const globals = {
   numberOfSpecies: 2,
   debug: true,
-  collisionRadius: 2,
+  collisionRadius: 30,
   rendering: true,
   canvas,
   ctx: canvas.getContext('2d'),
@@ -23,6 +22,8 @@ const globals = {
   canvasOffsetLeft: canvas.offsetLeft,
   canvasOffsetTop: canvas.offsetTop,
   totalSpeciesEnergy: 2000,
+  overPopulationRadius: 10,
+  overPopulationNumber: 20,
 };
 
 const generateTick = () => {
@@ -41,7 +42,7 @@ window.onkeypress = () => {
 
 const drawScore = () => {
   state.species.forEach((t, idx) => {
-    const scoreString = `${t.name}: ${t.getScore()}`;
+    const scoreString = `${t.name}: ${Math.ceil(t.getScore())}`;
     globals.ctx.font = '14px sans-serif';
     globals.ctx.fillStyle = t.colour;
     globals.ctx.fillText(scoreString, globals.canvasWidth - 250, 20 + 20 * idx);
@@ -161,18 +162,18 @@ document.onreadystatechange = async () => {
         i, // id
         `Team ${i + 1}`, // name
         colours.pop(), // colour
-        Math.ceil(50 * Math.random()), // group size
+        50 + Math.ceil(50 * Math.random()), // group size
         speciesDirection[i], //  direction
         speciesDirection[i] + Math.PI, // conflict direction
         Math.random(), // aggression
-        Math.random() * 0.05, // respawn
+        Math.random() / 50000, // respawn
         10 - size, // critter speed
         size, // critter size
-        2 * Math.random(), // critter spacing
-        3 * size + Math.ceil(Math.random() * 5), // scaredRadius,
-        1 * size + Math.ceil(Math.random() * 5), // safetyRadius,
-        Math.ceil(groupSize * 0.2), // scaredSafetyNumber,
-        Math.ceil(groupSize * 0.1), // calmSafetyNumber,
+        0.2 + Math.random(), // critter spacing
+        20 * size + Math.ceil(Math.random() * 20), // scaredRadius,
+        10 * size + Math.ceil(Math.random() * 10), // safetyRadius,
+        Math.ceil(groupSize * 0.25), // scaredSafetyNumber,
+        Math.ceil(groupSize * 0.15), // calmSafetyNumber,
         50000 + Math.ceil(Math.random() * 20000), // maxAge
       );
       s.generateCritters();

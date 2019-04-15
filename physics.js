@@ -13,9 +13,8 @@ const determineEnergyInCollision = (
   critter,
   collisionPosition,
 ) => {
-  let dist = Math.sqrt((critter.position.x - collisionPosition.x) ** 2 + (critter.position.y - collisionPosition.y));
-  if (dist < 1) { dist = 1; } // TODO: Fix me
-  return (critter.size * critter.speed) / (dist ** 2);
+  const dist = Math.sqrt((critter.position.x - collisionPosition.x) ** 2 + (critter.position.y - collisionPosition.y));
+  return (critter.size * critter.speed) / (dist / globals.collisionRadius);
 };
 
 const detectCollisions = () => {
@@ -39,11 +38,23 @@ const detectCollisions = () => {
 
 
     // Loop over the critters in the first species
-    const otherSpecies = state.species.slice(idx + 1, state.species.length); // TODO: this is wrong, for idx > 0
+    const otherSpecies = state.species.slice(idx + 1, state.species.length);
     t.critters.forEach((c) => {
+    // Loop over critters in each species in an area
+
+      // Critters will die if there are too many in a region
+      const overPopulatedCritters = t.getCrittersInRegion(c.position, globals.overPopulationRadius);
+      if (overPopulatedCritters.length > globals.overPopulationNumber) {
+        state.species[idx].critters = state.species[idx].critters.filter((c) => {
+          const critterOverPopulated = overPopulatedCritters.includes(c);
+          return !+critterOverPopulated * Math.random() < 0.1;
+        });
+      }
+
       // Get near collisions
       const currentSpeciesScaredCritters = t.getCrittersInRegion(c.position, t.scaredRadius);
       const otherSpeciesScaredCritters = otherSpecies.map(s => s.getCrittersInRegion(c.position, t.scaredRadius));
+
 
       // Iterate over the "other species"
       otherSpeciesScaredCritters.forEach((o, index) => {
@@ -94,16 +105,33 @@ const detectCollisions = () => {
 
       otherSpeciesCollisionCritters.forEach((o, index) => {
         if (o.length > 0) {
+          if (globals.debug) {
+            const cc = new Path2D();
+            cc.arc(
+              c.position.x,
+              c.position.y,
+              globals.collisionRadius,
+              0,
+              2 * Math.PI,
+            );
+            globals.ctx.fillStyle = 'rgba(255,0,0,0.4)';
+            globals.ctx.fill(cc);
+          }
+
+
           const otherSpeciesEnergy = otherSpecies[index].getEnergyInRegion(c.position, globals.collisionRadius);
           const currentSpeciesEnergy = t.getEnergyInRegion(c.position, globals.collisionRadius);
 
           if (otherSpeciesEnergy > currentSpeciesEnergy) {
             // Delete currentSpecies
             state.species[idx].critters = t.critters.filter(el => !currentSpeciesCollisionCritters.includes(el));
+            const otherSpeciesIdx = otherSpecies[index].id;
+            state.species[otherSpeciesIdx].critters = state.species[otherSpeciesIdx].critters.map((el) => { el.speed * 0.95; return el; });
           } else if (otherSpeciesEnergy < currentSpeciesEnergy) {
             // Delete otherSpecies
             const otherSpeciesIdx = otherSpecies[index].id;
             state.species[otherSpeciesIdx].critters = state.species[otherSpeciesIdx].critters.filter(el => !o.includes(el));
+            state.species[idx].critters = t.critters.map((el) => { el.speed *= 0.95; return el; });
           }
 
           // Draw a collision circle
