@@ -43,14 +43,14 @@ window.onkeypress = () => {
 const drawScore = () => {
   state.species.forEach((t, idx) => {
     const scoreString = `${t.name}: ${Math.ceil(t.getScore())}`;
-    globals.ctx.font = '14px sans-serif';
+    globals.ctx.font = '14px Lato, sans-serif';
     globals.ctx.fillStyle = t.colour;
     globals.ctx.fillText(scoreString, globals.canvasWidth - 250, 20 + 20 * idx);
   });
 };
 
 const drawSpeciesParameters = () => {
-  globals.ctx.font = '14px sans-serif';
+  globals.ctx.font = '14px Lato, sans-serif';
   globals.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
   const metricsOfInterest = ['name', 'groupSize', 'critterSpeed', 'critterSize', 'critterSpacing', 'respawnRate', 'scaredRadius', 'safetyRadius', 'calmSafetyNumber', 'scaredSafetyNumber', 'maxAge'];
   state.species.forEach((t, idx) => {
@@ -152,6 +152,9 @@ const determineSpeciesDirections = () => {
 const generateColours = () => chroma.scale(['yellow', '008ae5']).colors(globals.numberOfSpecies);
 
 document.onreadystatechange = async () => {
+  document.getElementById('createBtn').addEventListener('click', () => {
+    console.log('created');
+  });
   if (document.readyState === 'complete') {
     const speciesDirection = determineSpeciesDirections();
     const colours = generateColours();
