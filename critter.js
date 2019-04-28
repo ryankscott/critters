@@ -1,8 +1,7 @@
 /* eslint-disable import/extensions */
 import { uuid } from './uuid.js';
-import { detectCollisions, determineNextCritterPosition } from './physics.js';
+import { determineNextCritterPosition } from './physics.js';
 import { globals } from './main.js';
-import { lightenHexColour } from './colours.js';
 
 const Critter = class {
   constructor(
@@ -23,6 +22,7 @@ const Critter = class {
     this.size = size;
     this.scared = scared;
     this.age = 0;
+    this.energy = this.size * this.speed;
   }
 
   move() {

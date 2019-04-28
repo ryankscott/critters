@@ -2,6 +2,7 @@
 /* eslint-disable import/extensions */
 import { state } from './state.js';
 import { globals } from './main.js';
+import { colourCritters } from './utils.js';
 
 
 /**
@@ -14,7 +15,8 @@ const determineEnergyInCollision = (
   collisionPosition,
 ) => {
   const dist = Math.sqrt((critter.position.x - collisionPosition.x) ** 2 + (critter.position.y - collisionPosition.y));
-  return (critter.size * critter.speed) / (dist / globals.collisionRadius);
+  if (dist == 0) { return (critter.energy); }
+  return (critter.energy) / (dist / globals.collisionRadius);
 };
 
 const detectCollisions = () => {
@@ -22,39 +24,13 @@ const detectCollisions = () => {
 
   // Start with one species
   state.species.forEach((t, idx) => {
-    // Loop over scared critters in each species
-    const currentlyScaredCritters = t.getScaredCritters();
-    currentlyScaredCritters.forEach((c) => {
-      const closeCritters = t.getCrittersInRegion(c.position, t.safetyRadius);
-      const closeCalmCritters = closeCritters.filter(cc => !cc.scared);
-      // If there's more than X critters nearby they will become calm again
-      if ((closeCalmCritters.length > t.calmSafetyNumber) || (closeCritters.length > t.scaredSafetyNumber)) {
-        c.direction = t.direction;
-        c.collisionDirection = t.collisionDirection;
-        c.speed = t.critterSpeed;
-        c.scared = false;
-      }
-    });
-
-
     // Loop over the critters in the first species
     const otherSpecies = state.species.slice(idx + 1, state.species.length);
     t.critters.forEach((c) => {
     // Loop over critters in each species in an area
-
-      // Critters will die if there are too many in a region
-      const overPopulatedCritters = t.getCrittersInRegion(c.position, globals.overPopulationRadius);
-      if (overPopulatedCritters.length > globals.overPopulationNumber) {
-        state.species[idx].critters = state.species[idx].critters.filter((c) => {
-          const critterOverPopulated = overPopulatedCritters.includes(c);
-          return !+critterOverPopulated * Math.random() < 0.1;
-        });
-      }
-
       // Get near collisions
       const currentSpeciesScaredCritters = t.getCrittersInRegion(c.position, t.scaredRadius);
       const otherSpeciesScaredCritters = otherSpecies.map(s => s.getCrittersInRegion(c.position, t.scaredRadius));
-
 
       // Iterate over the "other species"
       otherSpeciesScaredCritters.forEach((o, index) => {
@@ -67,34 +43,48 @@ const detectCollisions = () => {
           if (otherSpeciesScaredEnergy > currentSpeciesScaredEnergy) {
             state.species[idx].critters.map((c) => {
               if (currentSpeciesScaredCritters.includes(c)) {
-                // When scared critters go to their conflict direction, and go at 80% speed
+                // When scared critters go to their conflict direction, and go at 110% speed
                 if (c.scared === false) {
-                  const prevDirection = c.direction;
-                  c.direction = c.scaredDirection;
-                  c.scaredDirection = prevDirection;
+                  c.direction -= c.scaredDirection;
                   c.scared = true;
-                  c.speed = Math.floor(c.speed * 0.8);
+                  c.speed = Math.floor(c.speed * 1.1);
+                  c.energy = Math.floor(c.energy * 0.9);
                 }
               }
               return c;
             });
+
+            // Debug
+            if (globals.debug) {
+              colourCritters(o, 'rgba(0, 255, 0, 0.4)');
+              colourCritters(currentSpeciesScaredCritters, 'rgba(255, 0, 0, 0.4)');
+              const currentTime = new Date().getTime();
+              while (currentTime + 2000 >= new Date().getTime()) {}
+            }
 
             // Other species will be scared
           } else if (otherSpeciesScaredEnergy < currentSpeciesScaredEnergy) {
             const otherSpeciesID = otherSpecies[index].id;
             state.species[otherSpeciesID].critters.map((cs) => {
               if (o.includes(cs)) {
-                // When scared critters go to their conflict direction, and go at 80% speed
+                // When scared critters go to their conflict direction, and go at 110% speed
                 if (cs.scared === false) {
-                  const prevDirection = cs.direction;
-                  cs.direction = cs.scaredDirection;
-                  cs.scaredDirection = prevDirection;
+                  cs.direction -= cs.scaredDirection;
                   cs.scared = true;
-                  cs.speed = Math.floor(cs.speed * 0.8);
+                  cs.speed = Math.floor(cs.speed * 1.1);
+                  cs.energy = Math.floor(cs.energy * 0.90);
                 }
               }
               return cs;
             });
+
+            // Debug
+            if (globals.debug) {
+              colourCritters(o, 'rgba(255, 0, 0, 0.4)');
+              colourCritters(currentSpeciesScaredCritters, 'rgba(0, 255, 0, 0.4)');
+              const currentTime = new Date().getTime();
+              while (currentTime + 2000 >= new Date().getTime()) {}
+            }
           }
         }
       });
@@ -126,12 +116,22 @@ const detectCollisions = () => {
             // Delete currentSpecies
             state.species[idx].critters = t.critters.filter(el => !currentSpeciesCollisionCritters.includes(el));
             const otherSpeciesIdx = otherSpecies[index].id;
-            state.species[otherSpeciesIdx].critters = state.species[otherSpeciesIdx].critters.map((el) => { el.speed * 0.95; return el; });
+            state.species[otherSpeciesIdx].critters = state.species[otherSpeciesIdx].critters.map((el) => {
+              if (o.includes(el)) {
+                el.speed *= 0.95;
+              }
+              return el;
+            });
           } else if (otherSpeciesEnergy < currentSpeciesEnergy) {
             // Delete otherSpecies
             const otherSpeciesIdx = otherSpecies[index].id;
             state.species[otherSpeciesIdx].critters = state.species[otherSpeciesIdx].critters.filter(el => !o.includes(el));
-            state.species[idx].critters = t.critters.map((el) => { el.speed *= 0.95; return el; });
+            state.species[idx].critters = t.critters.map((el) => {
+              if (currentSpeciesCollisionCritters.includes(el)) {
+                el.speed *= 0.95;
+              }
+              return el;
+            });
           }
 
           // Draw a collision circle
@@ -148,9 +148,6 @@ const detectCollisions = () => {
         }
       });
     });
-
-
-  // Find all critters in the collision
   });
 };
 

@@ -11,7 +11,6 @@ import { determineEnergyInCollision } from './physics.js';
  * @param  {number} groupSize - the maximum number of critters in a group
  * @param  {number} direction - the direction a critter travels
  * @param  {number} scaredDirection - the direction a critter turns when scared
- * @param  {number} aggression
  * @param  {number} respawnRate - how frequently are new critters created (0 - 1)
  * @param  {number} critterSpeed -the speed of each critter
  * @param  {number} critterSize - the size of each critter (integer)
@@ -30,7 +29,6 @@ const Species = class {
     groupSize,
     direction,
     scaredDirection,
-    aggression,
     respawnRate,
     critterSpeed,
     critterSize,
@@ -47,7 +45,6 @@ const Species = class {
     this.groupSize = groupSize;
     this.direction = direction;
     this.scaredDirection = scaredDirection;
-    this.aggression = aggression;
     this.respawnRate = respawnRate;
     this.critterSpeed = critterSpeed;
     this.critterSize = critterSize;
@@ -61,24 +58,26 @@ const Species = class {
     this.calmSafetyNumber = calmSafetyNumber;
     this.scaredSafetyNumber = scaredSafetyNumber;
     this.maxAge = maxAge;
+
+    this.generateCritters();
   }
 
   respawnCritters() {
     if (this.critters.length === 0) {
       return;
     }
-    const newCritters = Math.floor(this.critters.length * (1 - Math.E ** (-this.respawnRate * state.cycle)));
+    const newCritters = Math.floor(this.critters.length * (1 - Math.E ** ((-this.respawnRate / globals.respawnConstant) * state.cycle)));
     for (let index = 0; index < newCritters; index += 1) {
       const randomCritter = this.critters[Math.floor(Math.random() * this.critters.length)];
       // TODO: Only get non-scared critters
-      const respawnPosition = { x: randomCritter.position.x + Math.ceil((Math.random() - 0.5) * 50), y: randomCritter.position.y + Math.ceil((Math.random() - 0.5) * 50) };
+      const respawnPosition = { x: randomCritter.position.x + Math.ceil((Math.random() - 0.5) * 4 * this.critterSpacing), y: randomCritter.position.y + Math.ceil((Math.random() - 0.5) * 4 * this.critterSpacing) };
       this.critters.push(new Critter(
         this,
         respawnPosition,
         this.direction,
         this.scaredDirection,
-        Math.random() < 0.001 ? this.critterSpeed * 1.5 : this.critterSpeed, // Mutations
-        this.critterSize < 0.001 ? this.critterSize * 1.5 : this.critterSize, // Mutations
+        Math.random() < 0.001 ? this.critterSpeed * 1.5 : randomCritter.speed, // Mutations
+        Math.random() < 0.001 ? this.critterSize * 1.5 : randomCritter.size, // Mutations
         false,
       ));
     }
@@ -90,28 +89,69 @@ const Species = class {
   }
 
   killOldCritters() {
+    if (state.cycle % 10 == 0) {
+      this.critters = this.critters.filter((c) => {
+        const likelihood = (1 - Math.E ** (-(c.age / globals.ageDecayConstant) * state.cycle));
+        return Math.random() > likelihood;
+      });
+    }
+  }
+
+  killOverpopulatedCritters() {
     this.critters = this.critters.filter((c) => {
-      const likelihood = (1 - Math.E ** (-(c.age / 10000000) * state.cycle));
-      return Math.random() > likelihood;
+      const crittersInRegion = this.getCrittersInRegion(c.position, globals.overPopulationRadius);
+      if (crittersInRegion.length > globals.overPopulationNumber) {
+        console.debug({
+          name: 'Killing overpopulated critters',
+          team: this.id,
+        });
+        return Math.random() > 0.6;
+      }
+      return true;
     });
   }
 
-  /*
-   y = C e-kt, k > 0
+  calmCritters() {
+    const currentlyScaredCritters = this.getScaredCritters();
+    currentlyScaredCritters.forEach((c) => {
+      const closeCritters = this.getCrittersInRegion(c.position, this.safetyRadius);
+      const closeCalmCritters = closeCritters.filter(cc => !cc.scared);
+      // If there's more than X critters nearby they will become calm again
+      if ((closeCalmCritters.length > this.calmSafetyNumber) || (closeCritters.length > this.scaredSafetyNumber)) {
+        if (globals.debug) {
+          console.debug({
+            name: 'Calming critters in team',
+            team: this.id,
+          });
+        }
+        c.direction = this.direction;
+        c.speed = this.critterSpeed;
+        c.scared = false;
+      }
+    });
+  }
 
-    Features
-      Asymptotic to y = 0 to right
-      Passes through (0,C)
-      C is the initial value
-      Decreasing, but bounded below by y=0
-    */
+  normaliseCritterStats() {
+    this.critters.map((c) => {
+      if (c.speed < this.critterSpeed) {
+        c.speed *= 1.01;
+      } else {
+        c.speed *= 0.99;
+      }
+      if (c.energy < (this.critterSpeed * this.critterSize)) {
+        c.energy *= 1.01;
+      } else {
+        c.energy *= 0.99;
+      }
+      return c;
+    });
+  }
 
   determineCritterPositions() {
     const startX = this.id * (globals.canvasWidth / globals.numberOfSpecies);
     const endX = (this.id + 1) * (globals.canvasWidth / globals.numberOfSpecies);
     const startY = this.id * (globals.canvasHeight / globals.numberOfSpecies);
     const endY = (this.id + 1) * (globals.canvasHeight / globals.numberOfSpecies);
-
     // Number of groups in each axis
     const groupsInXY = Math.ceil(Math.sqrt(this.totalGroups));
 
@@ -120,7 +160,6 @@ const Species = class {
 
     const numberOfPixelsInXGroup = (endX - startX) / groupsInXY;
     const numberOfPixelsInYGroup = (endY - startY) / groupsInXY;
-
     const critterPositions = [];
     for (let i = 0; i < this.totalGroups; i += 1) {
       // Randomly pick a cell to start off in
@@ -128,6 +167,7 @@ const Species = class {
       const xCell = Math.floor(Math.random() * groupsInXY);
       const yCell = Math.floor(Math.random() * groupsInXY);
 
+      // TODO: Spacing can screw this up
       // Start with a naive approach
       for (let x = 0; x < crittersInXY; x += 1) {
         for (let y = 0; y < crittersInXY; y += 1) {
@@ -150,7 +190,7 @@ const Species = class {
     const critterPositions = this.determineCritterPositions();
     const critters = [];
     for (let i = 0; i < this.totalCritters; i += 1) {
-      const x = new Critter(
+      const c = new Critter(
         this,
         critterPositions.pop(),
         this.direction,
@@ -159,7 +199,7 @@ const Species = class {
         this.critterSize,
         false,
       );
-      critters.push(x);
+      critters.push(c);
     }
     this.critters = critters;
   }
@@ -178,7 +218,7 @@ const Species = class {
   }
 
   getScore() {
-    const score = this.critters.reduce((acc, cv) => (acc + cv.size * cv.speed), 0);
+    const score = this.critters.reduce((acc, cv) => (acc + cv.energy), 0);
     return score;
   }
 

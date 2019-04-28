@@ -2,6 +2,7 @@
 import { state } from './state.js';
 import { detectCollisions } from './physics.js';
 import Species from './species.js';
+import { uuid } from './uuid.js';
 
 // TODO: Collision behaviour
 // TODO: Better layouts (e.g. hex, pentagon, circle, square, random etc.)
@@ -12,7 +13,7 @@ import Species from './species.js';
 const canvas = document.getElementById('canvas');
 const globals = {
   numberOfSpecies: 2,
-  debug: true,
+  debug: false,
   collisionRadius: 30,
   rendering: true,
   canvas,
@@ -22,9 +23,13 @@ const globals = {
   canvasOffsetLeft: canvas.offsetLeft,
   canvasOffsetTop: canvas.offsetTop,
   totalSpeciesEnergy: 2000,
-  overPopulationRadius: 10,
-  overPopulationNumber: 20,
+  overPopulationRadius: 5,
+  overPopulationNumber: 50,
+  winningTeam: -1,
+  ageDecayConstant: 7500000,
+  respawnConstant: 25000,
 };
+
 
 const generateTick = () => {
   setInterval(() => {
@@ -40,11 +45,17 @@ window.onkeypress = () => {
   globals.rendering = true;
 };
 
+const determineWinner = () => {
+  const remainingTeams = state.species.filter(t => t.getScore() > 0);
+  return (remainingTeams && remainingTeams.length) > 1 ? -1 : remainingTeams[0].id;
+};
+
+
 const drawScore = () => {
-  state.species.forEach((t, idx) => {
-    const scoreString = `${t.name}: ${Math.ceil(t.getScore())}`;
+  state.species.forEach((s, idx) => {
+    const scoreString = `${s.name}: ${Math.ceil(s.getScore())}`;
     globals.ctx.font = '14px Lato, sans-serif';
-    globals.ctx.fillStyle = t.colour;
+    globals.ctx.fillStyle = s.colour;
     globals.ctx.fillText(scoreString, globals.canvasWidth - 250, 20 + 20 * idx);
   });
 };
@@ -52,12 +63,28 @@ const drawScore = () => {
 const drawSpeciesParameters = () => {
   globals.ctx.font = '14px Lato, sans-serif';
   globals.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  const metricsOfInterest = ['name', 'groupSize', 'critterSpeed', 'critterSize', 'critterSpacing', 'respawnRate', 'scaredRadius', 'safetyRadius', 'calmSafetyNumber', 'scaredSafetyNumber', 'maxAge'];
+  const metricsOfInterest = [
+    'name',
+    'groupSize',
+    'critterSpeed',
+    'critterSize',
+    'critterSpacing',
+    'respawnRate',
+    'scaredRadius',
+    'safetyRadius',
+    'calmSafetyNumber',
+    'scaredSafetyNumber',
+    'maxAge',
+  ];
   state.species.forEach((t, idx) => {
     let metricsDrawn = 0;
     Object.entries(t).forEach((e) => {
       if (metricsOfInterest.includes(e[0])) {
-        globals.ctx.fillText(e.join(': '), 0, 14 + 175 * idx + 14 * metricsDrawn);
+        globals.ctx.fillText(
+          e.join(': '),
+          0,
+          14 + 175 * idx + 14 * metricsDrawn,
+        );
         metricsDrawn += 1;
       }
     });
@@ -65,47 +92,32 @@ const drawSpeciesParameters = () => {
 };
 
 const handleTick = () => {
-  if (globals.rendering) {
-    clearCanvas();
-    state.species.forEach((v) => {
-      v.critters.forEach((c) => {
-        c.move();
-        c.draw();
+  if (state.species.length >= globals.numberOfSpecies) {
+    if (globals.rendering) {
+      clearCanvas();
+      state.species.forEach((s) => {
+        s.critters.forEach((c) => {
+          c.move();
+          c.draw();
+        });
+        detectCollisions();
+        s.respawnCritters();
+        s.ageCritters();
+        s.killOldCritters();
+        s.killOverpopulatedCritters();
+        s.calmCritters();
+        s.normaliseCritterStats();
       });
-      detectCollisions();
-      v.respawnCritters();
-      v.ageCritters();
-      v.killOldCritters();
-    });
-    drawScore();
-    drawSpeciesParameters();
-    // globals.rendering = false;
-    state.cycle += 1;
+      drawScore();
+      if (globals.debug) {
+        drawSpeciesParameters();
+      }
+      // globals.rendering = false;
+      state.cycle += 1;
+    }
   }
 };
 
-
-// Debug handling
-canvas.addEventListener(
-  'click',
-  (e) => {
-    const x = e.pageX - globals.canvasOffsetLeft;
-    const y = e.pageY - globals.canvasOffsetTop;
-    const allCritters = Object.values(state.critters).flat();
-    const clickedCritters = allCritters.filter(
-      c => Math.ceil(c.position.x) > x - 5
-        && Math.ceil(c.position.x) < x + 5
-        && Math.ceil(c.position.y) > y - 5
-        && Math.ceil(c.position.y) < y + 5,
-    );
-    clickedCritters.forEach((c) => {
-      // eslint-disable-next-line no-param-reassign
-      c.species.colour = '#00FF00';
-      c.draw();
-    });
-  },
-  false,
-);
 
 // Assume direction is a value between 0 and 2*PI
 /*
@@ -149,43 +161,208 @@ const determineSpeciesDirections = () => {
   return speciesDirections;
 };
 
-const generateColours = () => chroma.scale(['yellow', '008ae5']).colors(globals.numberOfSpecies);
+const degreesToRads = degrees => 2 * Math.PI * (degrees / 360);
+
+/*
+const validateControls = (controls) => {
+
+};
+*/
+
+
+const disableControls = (controls) => {
+  controls.forEach((f) => {
+    const item = document.getElementById(f);
+    item.disabled = true;
+  });
+};
+
+const createTeam = () => {
+  const directions = determineSpeciesDirections(globals.numberOfSpecies);
+  const requiredFields = [
+    'name',
+    'colour',
+    'groupSize',
+    'scaredBehaviours',
+    'respawnRate',
+    'critterSpeed',
+    'critterSize',
+    'critterSpacing',
+    'scaredRadius',
+    'safetyRadius',
+  ];
+  const settingsObject = requiredFields.map((f) => {
+    const item = document.getElementById(f);
+    return { id: [item.id], value: item.value };
+  });
+  const settings = Object.assign(
+    {},
+    ...settingsObject.map((o) => {
+      // TODO: add business logic to transform settings
+
+      switch (o.id[0]) {
+        case 'scaredBehaviours':
+          switch (o.value) {
+            case 'do_nothing':
+              return { [o.id]: degreesToRads(0) };
+
+            case 'go_backwards':
+              return {
+                [o.id]: degreesToRads(180),
+              };
+            case 'turn_left':
+              return {
+                [o.id]: degreesToRads(-90),
+              };
+            case 'turn_right':
+              return {
+                [o.id]: degreesToRads(90),
+              };
+
+            default:
+              break;
+          }
+          break;
+
+        case 'direction':
+          return { [o.id]: directions[state.species.length] };
+        case 'groupSize':
+          return { [o.id]: +o.value };
+        case 'respawnRate':
+          return { [o.id]: +o.value / 100 };
+        case 'critterSpeed':
+          return { [o.id]: +o.value };
+        case 'critterSize':
+          return { [o.id]: +o.value };
+        case 'critterSpacing':
+          return { [o.id]: +o.value / 10 };
+        case 'scaredRadius':
+          return { [o.id]: +o.value };
+        case 'safetyRadius':
+          return { [o.id]: +o.value };
+
+        default:
+          return { [o.id]: o.value };
+      }
+    }),
+  );
+  const s = new Species(
+    state.species.length, // id
+    settings.name,
+    settings.colour,
+    settings.groupSize,
+    state.directions[state.species.length], // manually set direction
+    settings.scaredBehaviours,
+    settings.respawnRate,
+    settings.critterSpeed,
+    settings.critterSize,
+    settings.critterSpacing,
+    settings.scaredRadius,
+    settings.safetyRadius,
+    Math.ceil(settings.groupSize * 0.15), // calmSafetyNumber
+    Math.ceil(settings.groupSize * 0.25), // scaredSafetyNumber
+    50000 + Math.ceil(Math.random() * 20000), // maxAge
+  );
+  // Add team
+  state.species.push(s);
+  // Clear fields
+  requiredFields.forEach((f) => {
+    const item = document.getElementById(f);
+    item.value = item.id === 'colour' ? chroma.random().toString() : '';
+  });
+  if (state.species.length === globals.numberOfSpecies) {
+    disableControls(requiredFields);
+  }
+};
+
+const createRandomTeam = () => {
+  const requiredFields = [
+    'name',
+    'colour',
+    'groupSize',
+    'scaredBehaviours',
+    'respawnRate',
+    'critterSpeed',
+    'critterSize',
+    'critterSpacing',
+    'scaredRadius',
+    'safetyRadius',
+  ];
+  const rand = Math.floor(4 * Math.random());
+  requiredFields.forEach((f) => {
+    const item = document.getElementById(f);
+    switch (item.id) {
+      case 'name':
+        item.value = `Team ${state.species.length}`;
+        break;
+      case 'colour':
+        item.value = chroma.random().saturate(1).brighten(1).toString();
+        break;
+      case 'groupSize':
+        item.value = Math.ceil(50 * Math.random());
+        break;
+
+      case 'scaredBehaviours':
+        switch (rand) {
+          case 0:
+            item.value = 'do_nothing';
+            break;
+          case 1:
+            item.value = 'go_backwards';
+            break;
+          case 2:
+            item.value = 'turn_left';
+            break;
+          case 3:
+            item.value = 'turn_right';
+            break;
+          default:
+            item.value = 'go_backwards';
+            break;
+        }
+        break;
+
+      case 'respawnRate':
+        item.value = Math.ceil(100 * Math.random());
+        break;
+
+      case 'critterSpeed':
+        item.value = Math.ceil(10 * Math.random());
+        break;
+
+      case 'critterSize':
+        item.value = 1 + Math.ceil(2 * Math.random());
+        break;
+
+      case 'critterSpacing':
+        item.value = Math.ceil(10 * Math.random());
+        break;
+
+      case 'scaredRadius':
+        item.value = 20 + Math.ceil(20 * Math.random());
+        break;
+
+      case 'safetyRadius':
+        item.value = 10 + Math.ceil(10 * Math.random());
+        break;
+
+      default:
+        break;
+    }
+  });
+};
 
 document.onreadystatechange = async () => {
+  state.directions = determineSpeciesDirections();
   document.getElementById('createBtn').addEventListener('click', () => {
-    console.log('created');
+    createTeam();
   });
-  if (document.readyState === 'complete') {
-    const speciesDirection = determineSpeciesDirections();
-    const colours = generateColours();
-    for (let i = 0; i < globals.numberOfSpecies; i += 1) {
-      const size = 4 - Math.ceil((Math.random() * 2));
-      const groupSize = Math.ceil(50 * Math.random());
-      const s = new Species(
-        i, // id
-        `Team ${i + 1}`, // name
-        colours.pop(), // colour
-        50 + Math.ceil(50 * Math.random()), // group size
-        speciesDirection[i], //  direction
-        speciesDirection[i] + Math.PI, // conflict direction
-        Math.random(), // aggression
-        Math.random() / 50000, // respawn
-        10 - size, // critter speed
-        size, // critter size
-        0.2 + Math.random(), // critter spacing
-        20 * size + Math.ceil(Math.random() * 20), // scaredRadius,
-        10 * size + Math.ceil(Math.random() * 10), // safetyRadius,
-        Math.ceil(groupSize * 0.25), // scaredSafetyNumber,
-        Math.ceil(groupSize * 0.15), // calmSafetyNumber,
-        50000 + Math.ceil(Math.random() * 20000), // maxAge
-      );
-      s.generateCritters();
-      state.species.push(s);
-    }
-    // Create clock
-    generateTick();
-    document.addEventListener('tick', handleTick, false);
-  }
+  document.getElementById('randomiseBtn').addEventListener('click', () => {
+    createRandomTeam();
+  });
+  // Create clock
+  document.addEventListener('tick', handleTick, false);
+  generateTick();
 };
 
 export { globals };

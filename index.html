@@ -4,114 +4,36 @@
 <head>
   <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
   <meta content="utf-8" http-equiv="encoding" />
-  <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
-  <title>Critters</title>
-  <style>
-    .app {
-      display: flex;
-      flex-direction: row;
-      border: solid 1px black;
-    }
-
-    body {
-      box-sizing: border-box;
-      background-color: black;
-      font-family: "Lato", sans-serif;
-    }
-
-    .header {
-      display: flex;
-      flex-direction: row;
-    }
-
-    h1 {
-      color: white;
-      font-weight: 32px;
-    }
-
-    .menu {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: white;
-      padding: 2px;
-      margin: 0px 5px;
-      width: 100%;
-    }
-
-    input {
-      margin: 5px;
-      width: 160px;
-    }
-
-    select {
-      margin: 5px;
-      height: 30px;
-      width: 170px;
-
-    }
-
-    #colour {
-      width: 35px;
-      height: 25px;
-      padding: 2px 0px;
-
-    }
-
-    label {
-      margin: 8px 5px 0px 5px;
-    }
-
-    .row {
-      display: flex;
-      flex-direction: row;
-      align-content: center;
-      justify-content: center;
-      width: 100%;
-    }
-
-    .col {
-      display: flex;
-      flex-direction: column;
-      margin: 0px 20px;
-    }
-
-    .createBtn {
-      margin: 10px 5px;
-      padding: 10px 5px;
-      width: 120px;
-      height: 40px;
-      border: 1px solid white;
-      background-color: black;
-      color: white;
-      font-size: 14px;
-    }
-
-    .createBtn:hover {
-      cursor: pointer;
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css?family=VT323" rel="stylesheet"> 
+  <link href="./styles.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.0.3/chroma.min.js"></script>
   <script src="./main.js" type="module"></script>
-  <script></script>
+  <title>Critters</title>
 </head>
 
 <body>
   <div class="header">
-    <h1>Critters</h1>
-  </div>
+    <pre>
+            _ _   _                 
+           (_) | | |                
+   ___ _ __ _| |_| |_ ___ _ __ ___  
+  / __| '__| | __| __/ _ \ '__/ __| 
+ | (__| |  | | |_| ||  __/ |  \__ \ 
+  \___|_|  |_|\__|\__\___|_|  |___/ 
+   </pre>   
+    </div>
   <div class="app">
     <div class=canvas>
       <canvas id="canvas" height="600" width="800"> </canvas>
     </div>
     <div class="menu">
       <h3> Create your species: </h3>
-      <div class="row">
-        <div class="col">
+      <div class="menuRow">
+        <div class="menuCol">
           <label for="name">Species Name:</label>
           <input type="text" id="name" name="number" required>
           <label for="groupSize">Group Size:</label>
-          <input type="number" id="groupSize" name="groupSize" required min="0" max="100">
+          <input type="number" id="groupSize" name="groupSize" required min="1" max="100">
           <label for="scaredBehaviour">Scared behaviour:</label>
           <select id="scaredBehaviours">
             <option value="do_nothing">Do nothing</option>
@@ -120,27 +42,26 @@
             <option value="turn_right">Turn right</option>
           </select>
           <label for="critterSize">Critter Size:</label>
-          <input type="number" id="critterSize" name="critterSize" required min="0" max="100">
+          <input type="number" id="critterSize" name="critterSize" required min="1" max="5">
           <label for="critterSpacing">Critter Spacing:</label>
-          <input type="number" id="critterSpacing" name="critterSpacing" required min="0" max="100">
-          <label for="safetyRadius">Safety Radius:</label>
-          <input type="number" id="safetyRadius" name="safetyRadius" required min="0" max="100">
+          <input type="number" id="critterSpacing" name="critterSpacing" required min="1" max="10">
 
         </div>
-        <div class="col">
+        <div class="menuCol">
           <label for="colour">Colour:</label>
-          <input type="color" id="colour" name="color" required width="20">
-          <label for="direction">Initial direction:</label>
-          <input type="number" id="direction" name="direction" required min="0" max="360">
+          <input type="color" id="colour"   value=chroma.random().toString() name="color" required width="20">
           <label for="respawnRate">Respawn Rate:</label>
-          <input type="number" id="respawnRate" name="respawnRate" required min="0" max="100">
+          <input type="number" id="respawnRate" name="respawnRate" required min="1" max="100">
           <label for="critterSpeed">Critter Speed:</label>
-          <input type="number" id="critterSpeed" name="critterSpeed" required min="0" max="100">
+          <input type="number" id="critterSpeed" name="critterSpeed" required min="1" max="10">
           <label for="scaredRadius">Scared Radius:</label>
-          <input type="number" id="scaredRadius" name="scaredRadius" required min="0" max="100">
+          <input type="number" id="scaredRadius" name="scaredRadius" required min="1" max="100">
+          <label for="safetyRadius">Safety Radius:</label>
+          <input type="number" id="safetyRadius" name="safetyRadius" required min="1" max="100">
         </div>
       </div>
-      <button class="createBtn" id="createBtn">Create </button>
+      <button class="btn" id="randomiseBtn">Randomise </button>
+      <button class="btn" id="createBtn">Create </button>
     </div>
   </div>
   </div>
