@@ -265,11 +265,11 @@ const createRandomTeam = () => {
         break;
 
       case 'scaredRadius':
-        item.value = 20 + Math.ceil(20 * Math.random());
+        item.value = Math.ceil(100 * Math.random());
         break;
 
       case 'safetyRadius':
-        item.value = 10 + Math.ceil(10 * Math.random());
+        item.value = Math.ceil(100 * Math.random());
         break;
 
       default:
