@@ -76,7 +76,7 @@ where:
       }
       const rMax = (this.respawnRate / globals.respawnRateConstant);
       const N = this.getScore();
-      const K = globals.totalSpeciesEnergy;
+      const K = globals.totalSpeciesEnergy * 1.2;
       const amountOfEnergyLeft = (rMax * N * ((K - N) / K));
       const numberOfNewCritters = Math.ceil(amountOfEnergyLeft / (this.critterSize * this.critterSpeed));
       // console.log(`Team ID: ${this.id}, total critters: ${N}, respawn rate: ${rMax}, new critters: ${numberOfNewCritters}`);

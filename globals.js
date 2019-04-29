@@ -16,7 +16,7 @@ const globals = {
   speedChangeInConflict: 0.90,
   speedChangeWhenScared: 1.05,
   speedNormalisationConstant: 1.01,
-  energyNormalisationConstant: 1.005,
+  energyNormalisationConstant: 1.001,
   mutationRate: 0.001,
   respawnRateConstant: 25.0,
 };

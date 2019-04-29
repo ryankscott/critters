@@ -1,4 +1,21 @@
 import { globals } from './globals.js';
+import { state } from './state.js';
+
+const generateRandomColour = () => {
+// Get a list of the currently used colours (including the background)
+  const colours = state.species.map(s => s.colour);
+  colours.push(chroma('#000000'));
+
+  // Find the average contrast between all colours
+  const average = newColour => colours.reduce((p, c) => p + chroma.distance(c, newColour), 0) / colours.length;
+
+  let randomColour = chroma.random();
+  // Keep generating colours until it's above threshold
+  while (average(randomColour) < 120) {
+    randomColour = chroma.random();
+  }
+  return randomColour;
+};
 
 const colourCritters = (critters, colour) => {
   critters.forEach((c) => {
@@ -24,5 +41,5 @@ const clearCanvas = () => {
 
 
 export {
-  colourCritters, degreesToRads, clearCanvas,
+  colourCritters, degreesToRads, clearCanvas, generateRandomColour,
 };

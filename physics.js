@@ -45,7 +45,7 @@ const detectCollisions = () => {
               if (currentSpeciesScaredCritters.includes(c)) {
                 // When scared critters go to their conflict direction, and go at 110% speed
                 if (c.scared === false) {
-                  c.direction -= c.scaredDirection;
+                  c.direction -= c.scaredDirection();
                   c.scared = true;
                   c.speed = Math.floor(c.speed * globals.speedChangeWhenScared);
                   c.energy = Math.floor(c.energy * globals.energyChangeInConflict);
@@ -69,7 +69,7 @@ const detectCollisions = () => {
               if (o.includes(cs)) {
                 // When scared critters go to their conflict direction, and go at 110% speed
                 if (cs.scared === false) {
-                  cs.direction -= cs.scaredDirection;
+                  cs.direction -= cs.scaredDirection();
                   cs.scared = true;
                   cs.speed = Math.floor(cs.speed * globals.speedChangeWhenScared);
                   cs.energy = Math.floor(cs.energy * globals.energyChangeInConflict);

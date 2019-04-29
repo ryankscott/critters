@@ -1,7 +1,7 @@
 import { globals } from './globals.js';
 import { state } from './state.js';
 import Species from './species.js';
-import { degreesToRads, clearCanvas } from './utils.js';
+import { degreesToRads, clearCanvas, generateRandomColour } from './utils.js';
 import { detectCollisions } from './physics.js';
 import fsm from './fsm.js';
 
@@ -125,21 +125,22 @@ const createTeam = () => {
         case 'scaredBehaviours':
           switch (o.value) {
             case 'do_nothing':
-              return { [o.id]: degreesToRads(0) };
+              return { [o.id]: () => (degreesToRads(0)) };
 
             case 'go_backwards':
               return {
-                [o.id]: degreesToRads(180),
+                [o.id]: () => (degreesToRads(180)),
               };
             case 'turn_left':
               return {
-                [o.id]: degreesToRads(-90),
+                [o.id]: () => (degreesToRads(-90)),
               };
             case 'turn_right':
               return {
-                [o.id]: degreesToRads(90),
+                [o.id]: () => (degreesToRads(90)),
               };
-
+            case 'random': // TODO: This should be random at each collision
+              return { [o.id]: () => (180 * (Math.random() - 0.5)) };
             default:
               break;
           }
@@ -156,7 +157,7 @@ const createTeam = () => {
         case 'critterSize':
           return { [o.id]: +o.value };
         case 'critterSpacing':
-          return { [o.id]: (0.2 + o.value / 10.0) };
+          return { [o.id]: (0.5 + +o.value / 10.0) };
         case 'scaredRadius':
           return { [o.id]: +o.value };
         case 'safetyRadius':
@@ -210,7 +211,7 @@ const createRandomTeam = () => {
     'scaredRadius',
     'safetyRadius',
   ];
-  const rand = Math.floor(4 * Math.random());
+  const rand = Math.floor(5 * Math.random());
   requiredFields.forEach((f) => {
     const item = document.getElementById(f);
     switch (item.id) {
@@ -218,7 +219,7 @@ const createRandomTeam = () => {
         item.value = `Team ${state.species.length}`;
         break;
       case 'colour':
-        item.value = chroma.random().saturate(1).brighten(1).toString();
+        item.value = generateRandomColour().toString();
         break;
       case 'groupSize':
         item.value = Math.ceil(50 * Math.random());
@@ -237,6 +238,9 @@ const createRandomTeam = () => {
             break;
           case 3:
             item.value = 'turn_right';
+            break;
+          case 4:
+            item.value = 'random';
             break;
           default:
             item.value = 'go_backwards';
