@@ -1,6 +1,6 @@
 @font-face {
   font-family: "dos437_web";
-  src: url(http://funhappythings.pixelsaredead.com/dos437/DOS437Unicode.ttf);
+  src: url(https://funhappythings.pixelsaredead.com/dos437/DOS437Unicode.ttf);
 }
 
 .app {
@@ -88,7 +88,7 @@ input:invalid {
   border: 2px dashed red;
 }
 input[type="range"] {
-  margin: 2px;
+  margin: 5px;
   width: 160px;
   padding: 5px;
   background-color: black;
