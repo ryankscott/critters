@@ -1,7 +1,7 @@
 /* eslint-disable import/extensions */
 import { uuid } from './uuid.js';
 import { determineNextCritterPosition } from './physics.js';
-import { globals } from './main.js';
+import { globals } from './globals.js';
 
 const Critter = class {
   constructor(

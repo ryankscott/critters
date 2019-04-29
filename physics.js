@@ -1,7 +1,7 @@
 /* eslint-disable no-mixed-operators */
 /* eslint-disable import/extensions */
 import { state } from './state.js';
-import { globals } from './main.js';
+import { globals } from './globals.js';
 import { colourCritters } from './utils.js';
 
 
@@ -47,8 +47,8 @@ const detectCollisions = () => {
                 if (c.scared === false) {
                   c.direction -= c.scaredDirection;
                   c.scared = true;
-                  c.speed = Math.floor(c.speed * 1.1);
-                  c.energy = Math.floor(c.energy * 0.9);
+                  c.speed = Math.floor(c.speed * globals.speedChangeWhenScared);
+                  c.energy = Math.floor(c.energy * globals.energyChangeInConflict);
                 }
               }
               return c;
@@ -71,8 +71,8 @@ const detectCollisions = () => {
                 if (cs.scared === false) {
                   cs.direction -= cs.scaredDirection;
                   cs.scared = true;
-                  cs.speed = Math.floor(cs.speed * 1.1);
-                  cs.energy = Math.floor(cs.energy * 0.90);
+                  cs.speed = Math.floor(cs.speed * globals.speedChangeWhenScared);
+                  cs.energy = Math.floor(cs.energy * globals.energyChangeInConflict);
                 }
               }
               return cs;
@@ -118,7 +118,7 @@ const detectCollisions = () => {
             const otherSpeciesIdx = otherSpecies[index].id;
             state.species[otherSpeciesIdx].critters = state.species[otherSpeciesIdx].critters.map((el) => {
               if (o.includes(el)) {
-                el.speed *= 0.95;
+                el.speed *= globals.speedChangeInConflict;
               }
               return el;
             });
@@ -128,7 +128,7 @@ const detectCollisions = () => {
             state.species[otherSpeciesIdx].critters = state.species[otherSpeciesIdx].critters.filter(el => !o.includes(el));
             state.species[idx].critters = t.critters.map((el) => {
               if (currentSpeciesCollisionCritters.includes(el)) {
-                el.speed *= 0.95;
+                el.speed *= globals.speedChangeInConflict;
               }
               return el;
             });

@@ -1,6 +1,6 @@
 /* eslint-disable import/extensions */
 import Critter from './critter.js';
-import { globals } from './main.js';
+import { globals } from './globals.js';
 import { state } from './state.js';
 import { determineEnergyInCollision } from './physics.js';
 /**
@@ -62,53 +62,45 @@ const Species = class {
     this.generateCritters();
   }
 
+  /*
+dN/dT = Rmax * N((K-N) / K)
+where:
+ - Rmax = growth rate
+ - N = population size
+ - K = carrying capacity (max size)
+*/
   respawnCritters() {
-    if (this.critters.length === 0) {
-      return;
-    }
-    const newCritters = Math.floor(this.critters.length * (1 - Math.E ** ((-this.respawnRate / globals.respawnConstant) * state.cycle)));
-    for (let index = 0; index < newCritters; index += 1) {
-      const randomCritter = this.critters[Math.floor(Math.random() * this.critters.length)];
-      // TODO: Only get non-scared critters
-      const respawnPosition = { x: randomCritter.position.x + Math.ceil((Math.random() - 0.5) * 4 * this.critterSpacing), y: randomCritter.position.y + Math.ceil((Math.random() - 0.5) * 4 * this.critterSpacing) };
-      this.critters.push(new Critter(
-        this,
-        respawnPosition,
-        this.direction,
-        this.scaredDirection,
-        Math.random() < 0.001 ? this.critterSpeed * 1.5 : randomCritter.speed, // Mutations
-        Math.random() < 0.001 ? this.critterSize * 1.5 : randomCritter.size, // Mutations
-        false,
-      ));
+    if (state.cycle % 10 == 0) {
+      if (this.critters.length === 0) {
+        return;
+      }
+      const rMax = (this.respawnRate / globals.respawnRateConstant);
+      const N = this.getScore();
+      const K = globals.totalSpeciesEnergy;
+      const amountOfEnergyLeft = (rMax * N * ((K - N) / K));
+      const numberOfNewCritters = Math.ceil(amountOfEnergyLeft / (this.critterSize * this.critterSpeed));
+      // console.log(`Team ID: ${this.id}, total critters: ${N}, respawn rate: ${rMax}, new critters: ${numberOfNewCritters}`);
+      if (numberOfNewCritters < 0) {
+        return;
+      }
+      for (let i = 0; i < numberOfNewCritters; i++) {
+        const randomCritter = this.critters[Math.floor(Math.random() * this.critters.length)];
+        const respawnPosition = { x: randomCritter.position.x + Math.ceil((Math.random() - 0.5) * 150 * this.critterSpacing), y: randomCritter.position.y + Math.ceil((Math.random() - 0.5) * 150 * this.critterSpacing) };
+        this.critters.push(new Critter(
+          this,
+          respawnPosition,
+          this.direction,
+          this.scaredDirection,
+          Math.random() < globals.mutationRate ? this.critterSpeed * 1.5 : randomCritter.speed, // Mutations
+          Math.random() < globals.mutationRate ? this.critterSize * 1.5 : randomCritter.size, // Mutations
+          false,
+        ));
+      }
     }
   }
-
 
   ageCritters() {
     this.critters.map(c => c.age += 1);
-  }
-
-  killOldCritters() {
-    if (state.cycle % 10 == 0) {
-      this.critters = this.critters.filter((c) => {
-        const likelihood = (1 - Math.E ** (-(c.age / globals.ageDecayConstant) * state.cycle));
-        return Math.random() > likelihood;
-      });
-    }
-  }
-
-  killOverpopulatedCritters() {
-    this.critters = this.critters.filter((c) => {
-      const crittersInRegion = this.getCrittersInRegion(c.position, globals.overPopulationRadius);
-      if (crittersInRegion.length > globals.overPopulationNumber) {
-        console.debug({
-          name: 'Killing overpopulated critters',
-          team: this.id,
-        });
-        return Math.random() > 0.6;
-      }
-      return true;
-    });
   }
 
   calmCritters() {
@@ -134,14 +126,14 @@ const Species = class {
   normaliseCritterStats() {
     this.critters.map((c) => {
       if (c.speed < this.critterSpeed) {
-        c.speed *= 1.01;
+        c.speed = Math.ceil(c.speed *= globals.speedNormalisationConstant);
       } else {
-        c.speed *= 0.99;
+        c.speed = Math.ceil(c.speed /= globals.speedNormalisationConstant);
       }
       if (c.energy < (this.critterSpeed * this.critterSize)) {
-        c.energy *= 1.01;
+        c.energy = Math.ceil(c.energy *= globals.energyNormalisationConstant);
       } else {
-        c.energy *= 0.99;
+        c.energy = Math.ceil(c.energy /= globals.energyNormalisationConstant);
       }
       return c;
     });

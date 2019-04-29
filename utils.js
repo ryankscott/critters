@@ -1,4 +1,4 @@
-import { globals } from './main.js';
+import { globals } from './globals.js';
 
 const colourCritters = (critters, colour) => {
   critters.forEach((c) => {
@@ -16,4 +16,13 @@ const colourCritters = (critters, colour) => {
 };
 
 
-export { colourCritters };
+const degreesToRads = degrees => 2 * Math.PI * (degrees / 360);
+
+const clearCanvas = () => {
+  globals.ctx.clearRect(0, 0, canvas.width, canvas.height);
+};
+
+
+export {
+  colourCritters, degreesToRads, clearCanvas,
+};

@@ -2,132 +2,180 @@
   font-family: "dos437_web";
   src: url(http://funhappythings.pixelsaredead.com/dos437/DOS437Unicode.ttf);
 }
-  
-  .app {
-      display: flex;
-      flex-direction: row;
-      border: solid 1px black;
-    }
-    .body {
-      font-family: 'DOS437_web', monospace;
-    }
 
-    body {
-      font-family: 'DOS437_web', monospace;
-      box-sizing: border-box;
-      background-color: black;
-    }
+.app {
+  display: flex;
+  flex-direction: row;
+  border: solid 1px black;
+  justify-content: center;
+}
 
-    .header {
-      display: flex;
-      flex-direction: row;
-      width: 100%;
-      justify-content: center;
-      align-content: center;
-    }
+.body {
+  font-family: "DOS437_web", monospace;
+}
 
-    h1 {
-      color: white;
-      font-size: 24px;
-    }
-    h2 {
-      color: white;
-      font-size: 18px;
-    }
-    h3 {
-      color: white;
-      font-size: 16px;
+body {
+  font-family: "DOS437_web", monospace;
+  box-sizing: border-box;
+  background-color: black;
+}
 
-    }
-    pre {
-      color: white;
+.header {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: center;
+  align-content: center;
+}
 
-    }
+.canvas {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-    .menu {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: white;
-      padding: 2px;
-      margin: 0px 5px;
-      width: 100%;
-    }
+h1 {
+  color: white;
+  font-size: 24px;
+}
+h2 {
+  color: white;
+  font-size: 18px;
+}
+h3 {
+  color: white;
+  font-size: 16px;
+}
+pre {
+  color: white;
+}
 
-    input {
-      margin: 5px;
-      width: 160px;
-      padding: 5px;
-      border: 2px dashed white;
-      background-color: black;
-      color: white;
-      font-family: 'dos437_web', monospace;
-      font-size: 10px;
-    }
-    input:invalid{
-      border: 2px dashed red;
-    }
+.menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  padding: 2px;
+  margin: 0px 5px;
+  width: 100%;
+}
+.hidden {
+  display: none !important;
+}
 
-    select {
-      margin: 5px;
-      height: 30px;
-      width: 170px;
-      font-family: 'dos437_web', monospace;
-      background-color: black;
-      color: white;
-      font-size: 10px;
+input[type="text"] {
+  margin: 5px;
+  width: 160px;
+  padding: 5px;
+  border: 2px dashed white;
+  background-color: black;
+  color: white;
+  font-family: "dos437_web", monospace;
+  font-size: 10px;
+}
+input[type="number"] {
+  margin: 5px;
+  width: 160px;
+  padding: 5px;
+  border: 2px dashed white;
+  background-color: black;
+  color: white;
+  font-family: "dos437_web", monospace;
+  font-size: 10px;
+}
+input:invalid {
+  border: 2px dashed red;
+}
+input[type="range"] {
+  margin: 2px;
+  width: 160px;
+  padding: 5px;
+  background-color: black;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  cursor: pointer;
+  background-color: white
+  color: black;
+}
 
-    }
+input[type="range"]::-moz-range-track {
+  width: 100%;
+  cursor: pointer;
+  background-color: white;
+  color: black;
+}
 
-    #colour {
-      width: 35px;
-      height: 25px;
-      padding: 2px 0px;
+select {
+  margin: 5px;
+  height: 30px;
+  width: 170px;
+  font-family: "dos437_web", monospace;
+  background-color: black;
+  color: white;
+  font-size: 10px;
+}
 
-    }
+#colour {
+  width: 35px;
+  height: 25px;
+  padding: 2px 0px;
+}
 
-    label {
-      font-size: 18px;
-      margin: 10px 5px 5px 5px;
-      font-family: 'dos437_web', monospace;
-      font-size: 10px;
-    }
+label {
+  font-size: 18px;
+  margin: 10px 5px 5px 5px;
+  font-family: "dos437_web", monospace;
+  font-size: 10px;
+}
 
-    .menuRow {
-      display: flex;
-      flex-direction: row;
-      align-content: center;
-      justify-content: center;
-      width: 100%;
-    }
+.menuRow {
+  display: flex;
+  flex-direction: row;
+  align-content: center;
+  justify-content: center;
+  width: 100%;
+}
 
-    .menuCol {
-      display: flex;
-      flex-direction: column;
-      margin: 0px 20px;
-    }
+.menuCol {
+  display: flex;
+  flex-direction: column;
+  margin: 0px 20px;
+}
 
-    .btn {
-      margin: 10px 5px;
-      padding: 10px 5px;
-      width: 130px;
-      height: 40px;
-      border: 1px solid white;
-      border-radius: 5px;
-      background-color: #222222;
-      color: #CCCCCC;
-      font-size: 10px;
-      font-family: 'dos437_web', monospace;
-    }
+.btn {
+  margin: 10px 5px;
+  padding: 10px 5px;
+  width: 130px;
+  height: 40px;
+  border: 1px solid white;
+  border-radius: 5px;
+  background-color: #222222;
+  color: #cccccc;
+  font-size: 10px;
+  font-family: "dos437_web", monospace;
+}
 
-    .btn:hover {
-      cursor: pointer;
-      background-color: black;
-      color: white;
-    }
-    .btn:disabled{
-      color: #DDDDDD;
-      background-color: #3f3f3f;
-      cursor: not-allowed;
+.btn:hover {
+  cursor: pointer;
+  background-color: black;
+  color: white;
+}
+.btn:disabled {
+  color: #dddddd;
+  background-color: #3f3f3f;
+  cursor: not-allowed;
+}
 
-    }
+.gameOver {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 120px;
+}
+
+.survivalTime {
+  color: white;
+}
