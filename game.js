@@ -1,7 +1,14 @@
 import { globals } from './globals.js';
 import { state } from './state.js';
 import Species from './species.js';
-import { degreesToRads, clearCanvas, generateRandomColour } from './utils.js';
+import {
+  degreesToRads,
+  clearCanvas,
+  generateRandomColour,
+  distanceBetweenCritters,
+  directionTowardsCritter,
+  colourCritters,
+} from './utils.js';
 import { detectCollisions } from './physics.js';
 import fsm from './fsm.js';
 
@@ -66,12 +73,10 @@ const showWinningText = () => {
   survivalText.innerHTML = `You survived for ${state.cycle / 20} seconds`;
 };
 
-
 const changeGameOverVisibility = (show) => {
   const gameOver = document.getElementById('gameOver');
   show ? gameOver.classList.remove('hidden') : gameOver.classList.add('hidden');
 };
-
 
 const changeCanvasVisibility = (show) => {
   const canvas = document.getElementById('canvasDiv');
@@ -85,17 +90,12 @@ const changeMenuVisibility = (show) => {
 
 const drawScore = () => {
   state.species.forEach((s, idx) => {
-    const scoreString = `${s.name} - Critters: ${s.critters.length}, Energy:  ${Math.ceil(s.getScore())}`;
+    const scoreString = `${s.name} - Critters: ${
+      s.critters.length
+    }, Energy:  ${Math.ceil(s.getScore())}`;
     globals.ctx.font = '14px Lato, sans-serif';
     globals.ctx.fillStyle = s.colour;
     globals.ctx.fillText(scoreString, globals.canvasWidth - 300, 20 + 20 * idx);
-  });
-};
-
-const disableControls = (controls) => {
-  controls.forEach((f) => {
-    const item = document.getElementById(f);
-    item.disabled = true;
   });
 };
 
@@ -125,39 +125,91 @@ const createTeam = () => {
         case 'scaredBehaviours':
           switch (o.value) {
             case 'do_nothing':
-              return { [o.id]: () => (degreesToRads(0)) };
-
+              return { [o.id]: c => c.direction };
             case 'go_backwards':
               return {
-                [o.id]: () => (degreesToRads(180)),
+                [o.id]: c => c.direction + degreesToRads(180),
               };
             case 'turn_left':
               return {
-                [o.id]: () => (degreesToRads(-90)),
+                [o.id]: c => c.direction - degreesToRads(90),
               };
-            case 'turn_right':
+            case 'turn_right': // TODO: seems to be broken
               return {
-                [o.id]: () => (degreesToRads(90)),
+                [o.id]: c => c.direction + degreesToRads(90),
               };
-            case 'random': // TODO: This should be random at each collision
-              return { [o.id]: () => (180 * (Math.random() - 0.5)) };
+            case 'random':
+              return { [o.id]: c => degreesToRads(180 * (Math.random() - 0.5)) };
+            case 'nearest_neighbour':
+              return {
+                [o.id]: (c) => {
+                  if (c.species.critters.length == 1) {
+                    return c.direction;
+                  }
+                  let neighbourRadius = 5;
+                  const getNearCritters = rad => c.species.getCrittersInRegion(c.position, rad).filter(cs => !cs.scared);
+                  while (getNearCritters(neighbourRadius).length <= 1) {
+                    // Otherwise it just returns the original critter
+                    neighbourRadius += 1;
+                    if (neighbourRadius >= 250) {
+                      return c.direction;
+                    }
+                  }
+                  const nearCritters = getNearCritters(neighbourRadius);
+                  nearCritters.splice(nearCritters.indexOf(c), 1); // remove the current critters
+                  const distances = nearCritters.map(nc => distanceBetweenCritters(nc, c));
+                  const minIdx = distances.indexOf(Math.min(...distances));
+                  const newDirection = directionTowardsCritter(
+                    c,
+                    nearCritters[minIdx],
+                  );
+                  return newDirection;
+                },
+              };
+            case 'towards_pack':
+              return {
+                [o.id]: (c) => {
+                  if (c.species.critters.length == 1) {
+                    return c.direction;
+                  }
+                  let startRadius = 5;
+                  const getNearCritters = rad => c.species.getCrittersInRegion(c.position, rad).filter(cs => !cs.scared);
+                  while (getNearCritters(startRadius).length <= 20) {
+                    // Otherwise it just returns the original critter
+                    startRadius += 1;
+                    // If it's too sparsely populated
+                    if (startRadius >= 250) {
+                      return c.direction;
+                    }
+                  }
+
+                  const nearCritters = getNearCritters(startRadius);
+                  nearCritters.splice(nearCritters.indexOf(c), 1); // remove the current critters
+
+                  const direction = nearCritters.reduce(
+                    (p, nc) => p + directionTowardsCritter(nc, c),
+                    0,
+                  );
+                  return (direction / nearCritters.length);
+                },
+              };
+
             default:
               break;
           }
-          break;
 
         case 'direction':
           return { [o.id]: directions[state.species.length] };
         case 'groupSize':
           return { [o.id]: +o.value };
         case 'respawnRate':
-          return { [o.id]: (0.5 + (+o.value / 10.0)) };
+          return { [o.id]: 0.5 + +o.value / 10.0 };
         case 'critterSpeed':
-          return { [o.id]: +o.value };
+          return { [o.id]: 2.0 + +o.value / 2.0 };
         case 'critterSize':
-          return { [o.id]: +o.value };
+          return { [o.id]: 0.25 + +o.value / 2.5 };
         case 'critterSpacing':
-          return { [o.id]: (0.5 + +o.value / 10.0) };
+          return { [o.id]: 0.5 + +o.value / 10.0 };
         case 'scaredRadius':
           return { [o.id]: +o.value };
         case 'safetyRadius':
@@ -190,7 +242,7 @@ const createTeam = () => {
   // Clear fields
   requiredFields.forEach((f) => {
     const item = document.getElementById(f);
-    item.value = item.id === 'colour' ? chroma.random().toString() : '';
+    item.value = item.id === 'colour' ? generateRandomColour() : '';
   });
 
   if (state.species.length === globals.numberOfSpecies) {
@@ -211,7 +263,8 @@ const createRandomTeam = () => {
     'scaredRadius',
     'safetyRadius',
   ];
-  const rand = Math.floor(5 * Math.random());
+  const numberOfBehavours = document.getElementById('scaredBehaviours').length;
+  const randBehaviour = Math.floor(numberOfBehavours * Math.random());
   requiredFields.forEach((f) => {
     const item = document.getElementById(f);
     switch (item.id) {
@@ -226,7 +279,7 @@ const createRandomTeam = () => {
         break;
 
       case 'scaredBehaviours':
-        switch (rand) {
+        switch (randBehaviour) {
           case 0:
             item.value = 'do_nothing';
             break;
@@ -242,6 +295,10 @@ const createRandomTeam = () => {
           case 4:
             item.value = 'random';
             break;
+          case 5:
+            item.value = 'nearest_neighbour';
+            break;
+
           default:
             item.value = 'go_backwards';
             break;
@@ -280,7 +337,9 @@ const createRandomTeam = () => {
 
 const determineWinner = () => {
   const remainingTeams = state.species.filter(t => t.getScore() > 0);
-  return (remainingTeams && remainingTeams.length) > 1 ? -1 : remainingTeams[0].id;
+  return (remainingTeams && remainingTeams.length) > 1
+    ? -1
+    : remainingTeams[0].id;
 };
 
 const drawSpeciesParameters = () => {
@@ -314,7 +373,6 @@ const drawSpeciesParameters = () => {
   });
 };
 
-
 const handleTick = () => {
   const hasSomeoneWon = determineWinner();
   if (hasSomeoneWon >= 0) {
@@ -327,11 +385,11 @@ const handleTick = () => {
     s.critters.forEach((c) => {
       c.move();
       c.draw();
+      c.normalise();
+      c.calm();
     });
     detectCollisions();
     s.respawnCritters();
-    s.calmCritters();
-    s.normaliseCritterStats();
   });
   drawScore();
   if (globals.debug) {
@@ -339,7 +397,6 @@ const handleTick = () => {
   }
   state.cycle += 1;
 };
-
 
 export {
   createTeam,

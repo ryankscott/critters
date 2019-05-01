@@ -11,7 +11,7 @@ const generateRandomColour = () => {
 
   let randomColour = chroma.random();
   // Keep generating colours until it's above threshold
-  while (average(randomColour) < 120) {
+  while (average(randomColour) < 100) {
     randomColour = chroma.random();
   }
   return randomColour;
@@ -32,6 +32,9 @@ const colourCritters = (critters, colour) => {
   });
 };
 
+const directionTowardsCritter = (c1, c2) => Math.atan((c2.position.y - c1.position.y) / (c2.position.x - c1.position.x));
+
+const distanceBetweenCritters = (c1, c2) => Math.sqrt((c1.position.x - c2.position.x) ** 2 + (c1.position.y - c2.position.y) ** 2);
 
 const degreesToRads = degrees => 2 * Math.PI * (degrees / 360);
 
@@ -41,5 +44,5 @@ const clearCanvas = () => {
 
 
 export {
-  colourCritters, degreesToRads, clearCanvas, generateRandomColour,
+  colourCritters, degreesToRads, clearCanvas, generateRandomColour, distanceBetweenCritters, directionTowardsCritter,
 };

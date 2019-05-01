@@ -76,7 +76,7 @@ where:
       }
       const rMax = (this.respawnRate / globals.respawnRateConstant);
       const N = this.getScore();
-      const K = globals.totalSpeciesEnergy * 1.2;
+      const K = globals.totalSpeciesEnergy;
       const amountOfEnergyLeft = (rMax * N * ((K - N) / K));
       const numberOfNewCritters = Math.ceil(amountOfEnergyLeft / (this.critterSize * this.critterSpeed));
       // console.log(`Team ID: ${this.id}, total critters: ${N}, respawn rate: ${rMax}, new critters: ${numberOfNewCritters}`);
@@ -85,7 +85,10 @@ where:
       }
       for (let i = 0; i < numberOfNewCritters; i++) {
         const randomCritter = this.critters[Math.floor(Math.random() * this.critters.length)];
-        const respawnPosition = { x: randomCritter.position.x + Math.ceil((Math.random() - 0.5) * 150 * this.critterSpacing), y: randomCritter.position.y + Math.ceil((Math.random() - 0.5) * 150 * this.critterSpacing) };
+        const respawnPosition = {
+          x: Math.min(globals.canvasWidth, randomCritter.position.x + Math.ceil((Math.random() - 0.5) * 150 * this.critterSpacing)),
+          y: Math.min(globals.canvasHeight, randomCritter.position.y + Math.ceil((Math.random() - 0.5) * 150 * this.critterSpacing)),
+        };
         this.critters.push(new Critter(
           this,
           respawnPosition,
@@ -97,46 +100,6 @@ where:
         ));
       }
     }
-  }
-
-  ageCritters() {
-    this.critters.map(c => c.age += 1);
-  }
-
-  calmCritters() {
-    const currentlyScaredCritters = this.getScaredCritters();
-    currentlyScaredCritters.forEach((c) => {
-      const closeCritters = this.getCrittersInRegion(c.position, this.safetyRadius);
-      const closeCalmCritters = closeCritters.filter(cc => !cc.scared);
-      // If there's more than X critters nearby they will become calm again
-      if ((closeCalmCritters.length > this.calmSafetyNumber) || (closeCritters.length > this.scaredSafetyNumber)) {
-        if (globals.debug) {
-          console.debug({
-            name: 'Calming critters in team',
-            team: this.id,
-          });
-        }
-        c.direction = this.direction;
-        c.speed = this.critterSpeed;
-        c.scared = false;
-      }
-    });
-  }
-
-  normaliseCritterStats() {
-    this.critters.map((c) => {
-      if (c.speed < this.critterSpeed) {
-        c.speed = Math.ceil(c.speed *= globals.speedNormalisationConstant);
-      } else {
-        c.speed = Math.ceil(c.speed /= globals.speedNormalisationConstant);
-      }
-      if (c.energy < (this.critterSpeed * this.critterSize)) {
-        c.energy = Math.ceil(c.energy *= globals.energyNormalisationConstant);
-      } else {
-        c.energy = Math.ceil(c.energy /= globals.energyNormalisationConstant);
-      }
-      return c;
-    });
   }
 
   determineCritterPositions() {
