@@ -123,83 +123,9 @@ const createTeam = () => {
 
       switch (o.id[0]) {
         case 'scaredBehaviours':
-          switch (o.value) {
-            case 'do_nothing':
-              return { [o.id]: c => c.direction };
-            case 'go_backwards':
-              return {
-                [o.id]: c => c.direction + degreesToRads(180),
-              };
-            case 'turn_left':
-              return {
-                [o.id]: c => c.direction - degreesToRads(90),
-              };
-            case 'turn_right': // TODO: seems to be broken
-              return {
-                [o.id]: c => c.direction + degreesToRads(90),
-              };
-            case 'random':
-              return { [o.id]: c => degreesToRads(180 * (Math.random() - 0.5)) };
-            case 'nearest_neighbour':
-              return {
-                [o.id]: (c) => {
-                  if (c.species.critters.length == 1) {
-                    return c.direction;
-                  }
-                  let neighbourRadius = 5;
-                  const getNearCritters = rad => c.species.getCrittersInRegion(c.position, rad).filter(cs => !cs.scared);
-                  while (getNearCritters(neighbourRadius).length <= 1) {
-                    // Otherwise it just returns the original critter
-                    neighbourRadius += 1;
-                    if (neighbourRadius >= 250) {
-                      return c.direction;
-                    }
-                  }
-                  const nearCritters = getNearCritters(neighbourRadius);
-                  nearCritters.splice(nearCritters.indexOf(c), 1); // remove the current critters
-                  const distances = nearCritters.map(nc => distanceBetweenCritters(nc, c));
-                  const minIdx = distances.indexOf(Math.min(...distances));
-                  const newDirection = directionTowardsCritter(
-                    c,
-                    nearCritters[minIdx],
-                  );
-                  return newDirection;
-                },
-              };
-            case 'towards_pack':
-              return {
-                [o.id]: (c) => {
-                  if (c.species.critters.length == 1) {
-                    return c.direction;
-                  }
-                  let startRadius = 5;
-                  const getNearCritters = rad => c.species.getCrittersInRegion(c.position, rad).filter(cs => !cs.scared);
-                  while (getNearCritters(startRadius).length <= 20) {
-                    // Otherwise it just returns the original critter
-                    startRadius += 1;
-                    // If it's too sparsely populated
-                    if (startRadius >= 250) {
-                      return c.direction;
-                    }
-                  }
-
-                  const nearCritters = getNearCritters(startRadius);
-                  nearCritters.splice(nearCritters.indexOf(c), 1); // remove the current critters
-
-                  const direction = nearCritters.reduce(
-                    (p, nc) => p + directionTowardsCritter(nc, c),
-                    0,
-                  );
-                  return (direction / nearCritters.length);
-                },
-              };
-
-            default:
-              break;
-          }
-
+          return { [o.id]: o.value };
         case 'direction':
-          return { [o.id]: directions[state.species.length] };
+          return { [o.id]: this.state.directions[state.species.length] };
         case 'groupSize':
           return { [o.id]: +o.value };
         case 'respawnRate':

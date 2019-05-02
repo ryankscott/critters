@@ -1,6 +1,11 @@
 import { globals } from './globals.js';
 import { state } from './state.js';
 
+const generateColours = (n) => {
+  const s = chroma.scale('Spectral');
+  return s.colors(n);
+};
+
 const generateRandomColour = () => {
 // Get a list of the currently used colours (including the background)
   const colours = state.species.map(s => s.colour);
@@ -39,10 +44,16 @@ const distanceBetweenCritters = (c1, c2) => Math.sqrt((c1.position.x - c2.positi
 const degreesToRads = degrees => 2 * Math.PI * (degrees / 360);
 
 const clearCanvas = () => {
-  globals.ctx.clearRect(0, 0, canvas.width, canvas.height);
+  globals.ctx.clearRect(0, 0, globals.canvasWidth, globals.canvasHeight);
 };
 
 
 export {
-  colourCritters, degreesToRads, clearCanvas, generateRandomColour, distanceBetweenCritters, directionTowardsCritter,
+  colourCritters,
+  degreesToRads,
+  clearCanvas,
+  generateRandomColour,
+  distanceBetweenCritters,
+  directionTowardsCritter,
+  generateColours,
 };

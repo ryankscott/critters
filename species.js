@@ -3,6 +3,39 @@ import Critter from './critter.js';
 import { globals } from './globals.js';
 import { state } from './state.js';
 import { determineEnergyInCollision } from './physics.js';
+
+
+const drawCrittersGroup = (
+  shape,
+  numberOfCritters,
+  pixelsPerXAxis,
+  pixelsPerYAxis,
+  spacingPerCritter,
+  xOffset,
+  yOffset,
+) => {
+  const critterPositions = [];
+  switch (shape) {
+    case 'square_filled': {
+      const crittersInAxis = Math.ceil(Math.sqrt(numberOfCritters));
+      for (let x = 0; x < crittersInAxis; x += 1) {
+        for (let y = 0; y < crittersInAxis; y += 1) {
+          const xPos = xOffset + spacingPerCritter * (pixelsPerXAxis / crittersInAxis) * x;
+          const yPos = yOffset + spacingPerCritter * (pixelsPerYAxis / crittersInAxis) * y;
+          critterPositions.push({ x: xPos, y: yPos });
+        }
+      }
+      return critterPositions;
+    }
+    case 'square_empty': {
+    }
+    default:
+      break;
+  }
+  return critterPositions;
+};
+
+
 /**
  *
  * @param  {number} id - a unique identifier
@@ -21,6 +54,7 @@ import { determineEnergyInCollision } from './physics.js';
  * @param  {number} scaredSafetyNumber - the number of scared critters in a radius before it's considered safe
  * @param  {number} maxAge - the number of cycles before a critter dies (integer)
  */
+
 const Species = class {
   constructor(
     id,
@@ -28,7 +62,7 @@ const Species = class {
     colour,
     groupSize,
     direction,
-    scaredDirection,
+    scaredBehaviour,
     respawnRate,
     critterSpeed,
     critterSize,
@@ -44,7 +78,7 @@ const Species = class {
     this.colour = colour;
     this.groupSize = groupSize;
     this.direction = direction;
-    this.scaredDirection = scaredDirection;
+    this.scaredBehaviour = scaredBehaviour;
     this.respawnRate = respawnRate;
     this.critterSpeed = critterSpeed;
     this.critterSize = critterSize;
@@ -79,7 +113,6 @@ where:
       const K = globals.totalSpeciesEnergy;
       const amountOfEnergyLeft = (rMax * N * ((K - N) / K));
       const numberOfNewCritters = Math.ceil(amountOfEnergyLeft / (this.critterSize * this.critterSpeed));
-      // console.log(`Team ID: ${this.id}, total critters: ${N}, respawn rate: ${rMax}, new critters: ${numberOfNewCritters}`);
       if (numberOfNewCritters < 0) {
         return;
       }
@@ -107,38 +140,36 @@ where:
     const endX = (this.id + 1) * (globals.canvasWidth / globals.numberOfSpecies);
     const startY = this.id * (globals.canvasHeight / globals.numberOfSpecies);
     const endY = (this.id + 1) * (globals.canvasHeight / globals.numberOfSpecies);
+
     // Number of groups in each axis
-    const groupsInXY = Math.ceil(Math.sqrt(this.totalGroups));
+    const maxGroupsPerAxis = Math.ceil(Math.sqrt(this.totalGroups));
 
     // Number of critters in each group axis
-    const crittersInXY = Math.ceil(Math.sqrt(this.groupSize));
+    const pixelsPerXGroup = (endX - startX) / maxGroupsPerAxis;
+    const pixelsPerYGroup = (endY - startY) / maxGroupsPerAxis;
 
-    const numberOfPixelsInXGroup = (endX - startX) / groupsInXY;
-    const numberOfPixelsInYGroup = (endY - startY) / groupsInXY;
     const critterPositions = [];
     for (let i = 0; i < this.totalGroups; i += 1) {
-      // Randomly pick a cell to start off in
-      // TODO: Fix if it's already a populated cell
-      const xCell = Math.floor(Math.random() * groupsInXY);
-      const yCell = Math.floor(Math.random() * groupsInXY);
+      for (let x = 0; x < maxGroupsPerAxis; x += 1) {
+        for (let y = 0; y < maxGroupsPerAxis; y += 1) {
+          const xOffset = x * pixelsPerXGroup + startX;
+          const yOffset = y * pixelsPerYGroup + startY;
 
-      // TODO: Spacing can screw this up
-      // Start with a naive approach
-      for (let x = 0; x < crittersInXY; x += 1) {
-        for (let y = 0; y < crittersInXY; y += 1) {
-          const xPos = startX // Start of the species area
-            + xCell * numberOfPixelsInXGroup // Get the start of the cell
-            + 0.5 * numberOfPixelsInXGroup // Start at the middle of the cell
-            + this.critterSpacing * (numberOfPixelsInXGroup / crittersInXY) * x; // Add spacing between critters
-          const yPos = startY
-            + 0.5 * numberOfPixelsInYGroup
-            + yCell * numberOfPixelsInYGroup
-            + this.critterSpacing * (numberOfPixelsInXGroup / crittersInXY) * y;
-          critterPositions.push({ x: xPos, y: yPos });
+          // Start with a naive approach
+          const groupCrittersPositions = drawCrittersGroup(
+            'square_filled',
+            this.groupSize,
+            pixelsPerXGroup,
+            pixelsPerYGroup,
+            this.critterSpacing,
+            xOffset,
+            yOffset,
+          );
+          critterPositions.push(groupCrittersPositions);
         }
       }
     }
-    return critterPositions;
+    return critterPositions.flat();
   }
 
   generateCritters() {
@@ -149,7 +180,7 @@ where:
         this,
         critterPositions.pop(),
         this.direction,
-        this.scaredDirection,
+        this.scaredBehaviour,
         this.critterSpeed,
         this.critterSize,
         false,
