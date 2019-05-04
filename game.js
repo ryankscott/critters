@@ -2,15 +2,12 @@ import { globals } from './globals.js';
 import { state } from './state.js';
 import Species from './species.js';
 import {
-  degreesToRads,
   clearCanvas,
   generateRandomColour,
-  distanceBetweenCritters,
-  directionTowardsCritter,
-  colourCritters,
 } from './utils.js';
 import { detectCollisions } from './physics.js';
 import fsm from './fsm.js';
+import { zergs } from './levels.js';
 
 // Assume direction is a value between 0 and 2*PI
 /*
@@ -26,33 +23,11 @@ import fsm from './fsm.js';
 
   */
 
-const determineSpeciesDirections = () => {
-  const speciesDirections = {};
-  // Split the entire direction in to number of species fractions
-  for (let i = 0; i < globals.numberOfSpecies; i += 1) {
-    switch (i % 4) {
-      case 0:
-        speciesDirections[i] = 1.5 * Math.PI + 0.5 * Math.PI * Math.random();
-        break;
+const determineSpeciesDirections = () => [1.5 * Math.PI + 0.25 * Math.PI + (0.25 * Math.PI * (Math.random() - 0.5)),
+  0.5 * Math.PI + 0.25 * Math.PI + (0.250 * Math.PI * (Math.random() - 0.5))];
 
-      case 1:
-        speciesDirections[i] = 0.5 * Math.PI + 0.5 * Math.PI * Math.random();
-        break;
+const getNextTeamID = () => state.species.length;
 
-      case 2:
-        speciesDirections[i] = 1 * Math.PI + Math.PI * Math.random();
-        break;
-
-      case 3:
-        speciesDirections[i] = 0 * Math.PI + 0.5 * Math.PI * Math.random();
-        break;
-
-      default:
-        break;
-    }
-  }
-  return speciesDirections;
-};
 
 const hideWinningText = () => {
   const youWon = document.getElementById('youWon');
@@ -64,13 +39,14 @@ const hideWinningText = () => {
 const showWinningText = () => {
   const youWon = document.getElementById('youWon');
   const youLost = document.getElementById('youLost');
-  if (state.winningTeam == 0) {
+  const survivalText = document.getElementById('survivalTime');
+  if (state.winningTeam === 0) {
     youWon.classList.remove('hidden');
+    survivalText.innerHTML = `You won in ${state.cycle / 20} seconds`;
   } else {
     youLost.classList.remove('hidden');
+    survivalText.innerHTML = `You survived for ${state.cycle / 20} seconds`;
   }
-  const survivalText = document.getElementById('survivalTime');
-  survivalText.innerHTML = `You survived for ${state.cycle / 20} seconds`;
 };
 
 const changeGameOverVisibility = (show) => {
@@ -105,8 +81,7 @@ const createTeam = () => {
     'colour',
     'groupSize',
     'scaredBehaviours',
-    'respawnRate',
-    'critterSpeed',
+    'energyUsage',
     'critterSize',
     'critterSpacing',
     'scaredRadius',
@@ -120,7 +95,6 @@ const createTeam = () => {
     {},
     ...settingsObject.map((o) => {
       // TODO: add business logic to transform settings
-
       switch (o.id[0]) {
         case 'scaredBehaviours':
           return { [o.id]: o.value };
@@ -128,14 +102,18 @@ const createTeam = () => {
           return { [o.id]: this.state.directions[state.species.length] };
         case 'groupSize':
           return { [o.id]: +o.value };
-        case 'respawnRate':
-          return { [o.id]: 0.5 + +o.value / 10.0 };
-        case 'critterSpeed':
-          return { [o.id]: 2.0 + +o.value / 2.0 };
+        case 'energyUsage':
+          return {
+            respawnRate: 1 - (+o.value / 10.0),
+            critterEnergy: +o.value / 10.0,
+          };
         case 'critterSize':
-          return { [o.id]: 0.25 + +o.value / 2.5 };
+          return {
+            critterSpeed: (+o.value / 10.0),
+            critterSize: 1 - (+o.value / 10.0),
+          };
         case 'critterSpacing':
-          return { [o.id]: 0.5 + +o.value / 10.0 };
+          return { [o.id]: (+o.value / 10.0) };
         case 'scaredRadius':
           return { [o.id]: +o.value };
         case 'safetyRadius':
@@ -147,24 +125,38 @@ const createTeam = () => {
     }),
   );
   const s = new Species(
-    state.species.length, // id
+    getNextTeamID(),
     settings.name,
     settings.colour,
     settings.groupSize,
+    'square_filled',
     state.directions[state.species.length], // manually set direction
     settings.scaredBehaviours,
-    settings.respawnRate,
-    settings.critterSpeed,
-    settings.critterSize,
-    settings.critterSpacing,
+    settings.respawnRate * 2,
+    settings.critterSpeed * 10,
+    settings.critterSize * 2 + 1.0,
+    settings.critterSpacing * 10,
+    settings.critterEnergy * 20,
     settings.scaredRadius,
     settings.safetyRadius,
     Math.ceil(settings.groupSize * 0.15), // calmSafetyNumber
     Math.ceil(settings.groupSize * 0.25), // scaredSafetyNumber
-    50000 + Math.ceil(Math.random() * 20000), // maxAge
   );
   // Add team
   state.species.push(s);
+
+  // Add level one species
+  switch (state.level) {
+    case 1:
+      state.species.push(zergs(getNextTeamID()));
+      break;
+
+    default:
+      state.species.push(zergs);
+      break;
+  }
+
+  console.log(state.species);
   // Clear fields
   requiredFields.forEach((f) => {
     const item = document.getElementById(f);
@@ -182,8 +174,7 @@ const createRandomTeam = () => {
     'colour',
     'groupSize',
     'scaredBehaviours',
-    'respawnRate',
-    'critterSpeed',
+    'energyUsage',
     'critterSize',
     'critterSpacing',
     'scaredRadius',
@@ -201,7 +192,7 @@ const createRandomTeam = () => {
         item.value = generateRandomColour().toString();
         break;
       case 'groupSize':
-        item.value = Math.ceil(50 * Math.random());
+        item.value = Math.ceil(100 * Math.random());
         break;
 
       case 'scaredBehaviours':
@@ -224,23 +215,18 @@ const createRandomTeam = () => {
           case 5:
             item.value = 'nearest_neighbour';
             break;
-
           default:
             item.value = 'go_backwards';
             break;
         }
         break;
 
-      case 'respawnRate':
+      case 'energyUsage':
         item.value = Math.ceil(5 * Math.random());
         break;
 
-      case 'critterSpeed':
-        item.value = Math.ceil(10 * Math.random());
-        break;
-
       case 'critterSize':
-        item.value = 1 + Math.ceil(2 * Math.random());
+        item.value = Math.ceil(5 * Math.random());
         break;
 
       case 'critterSpacing':
@@ -334,4 +320,5 @@ export {
   hideWinningText,
   handleTick,
   determineSpeciesDirections,
+  getNextTeamID,
 };

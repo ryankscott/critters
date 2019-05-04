@@ -13,7 +13,7 @@ document.onreadystatechange = async () => {
   document.getElementById('randomiseBtn').addEventListener('click', () => {
     createRandomTeam();
   });
-  document.getElementById('createBtn').addEventListener('click', () => {
+  document.getElementById('startBtn').addEventListener('click', () => {
     state.directions = determineSpeciesDirections(); // TODO: Move me
     state.colours = generateColours(2); // TODO: Move me
     createTeam();

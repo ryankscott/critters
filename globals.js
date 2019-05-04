@@ -11,7 +11,7 @@ const globals = {
   canvasWidth: canvas.width,
   canvasOffsetLeft: canvas.offsetLeft,
   canvasOffsetTop: canvas.offsetTop,
-  totalSpeciesEnergy: 2000,
+  totalSpeciesEnergy: 500,
   energyChangeInConflict: 0.75,
   speedChangeInConflict: 0.90,
   speedChangeWhenScared: 1.05,

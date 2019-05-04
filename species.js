@@ -15,19 +15,50 @@ const drawCrittersGroup = (
   yOffset,
 ) => {
   const critterPositions = [];
+  const shapeSize = 30;
   switch (shape) {
     case 'square_filled': {
       const crittersInAxis = Math.ceil(Math.sqrt(numberOfCritters));
       for (let x = 0; x < crittersInAxis; x += 1) {
         for (let y = 0; y < crittersInAxis; y += 1) {
-          const xPos = xOffset + spacingPerCritter * (pixelsPerXAxis / crittersInAxis) * x;
-          const yPos = yOffset + spacingPerCritter * (pixelsPerYAxis / crittersInAxis) * y;
+          const xPos = xOffset + spacingPerCritter * (shapeSize / crittersInAxis) * x;
+          const yPos = yOffset + spacingPerCritter * (shapeSize / crittersInAxis) * y;
           critterPositions.push({ x: xPos, y: yPos });
         }
       }
       return critterPositions;
     }
+    case 'circle': {
+      const radsPerCritter = (2 * Math.PI) / numberOfCritters;
+      for (let j = 0; j < numberOfCritters; j++) {
+        critterPositions.push({
+          x: xOffset + shapeSize * Math.sin(radsPerCritter * j),
+          y: yOffset + shapeSize * Math.cos(radsPerCritter * j),
+        });
+      }
+      return critterPositions;
+    }
     case 'square_empty': {
+      const crittersPerEdge = Math.ceil(numberOfCritters / 4);
+      for (let j = 0; j < crittersPerEdge; j += 1) {
+        critterPositions.push({
+          x: xOffset + spacingPerCritter + j * (shapeSize / crittersPerEdge),
+          y: yOffset,
+        });
+        critterPositions.push({
+          x: xOffset + shapeSize,
+          y: yOffset + spacingPerCritter + j * (shapeSize / crittersPerEdge),
+        });
+        critterPositions.push({
+          x: xOffset,
+          y: yOffset + spacingPerCritter + j * (shapeSize / crittersPerEdge),
+        });
+        critterPositions.push({
+          x: xOffset + spacingPerCritter + j * (shapeSize / crittersPerEdge),
+          y: yOffset + shapeSize,
+        });
+      }
+      return critterPositions;
     }
     default:
       break;
@@ -42,12 +73,14 @@ const drawCrittersGroup = (
  * @param  {string} name - species name
  * @param  {string} colour - a colour string that will be used for critters
  * @param  {number} groupSize - the maximum number of critters in a group
+ * @param  {number} groupShape - the shape of critters in a group
  * @param  {number} direction - the direction a critter travels
  * @param  {number} scaredDirection - the direction a critter turns when scared
  * @param  {number} respawnRate - how frequently are new critters created (0 - 1)
  * @param  {number} critterSpeed -the speed of each critter
  * @param  {number} critterSize - the size of each critter (integer)
  * @param  {number} critterSpacing - the distance around each critter in a group (integer)
+ * @param  {number} critterEnergy - the energy used for battle for critter (integer)
  * @param  {number} scaredRadius - the distance around a critter that's checked for enemy critters to determine if it's scared (integer)
  * @param  {number} safetyRadius - the distance around a critter that's checked for critters to determine if it's safe (integer)
  * @param  {number} calmSafetyNumber - the number of calm critters in a radius before it's considered safe
@@ -61,37 +94,37 @@ const Species = class {
     name,
     colour,
     groupSize,
+    groupShape,
     direction,
     scaredBehaviour,
     respawnRate,
     critterSpeed,
     critterSize,
     critterSpacing,
+    critterEnergy,
     scaredRadius,
     safetyRadius,
     calmSafetyNumber,
     scaredSafetyNumber,
-    maxAge,
   ) {
     this.id = id;
     this.name = name;
     this.colour = colour;
     this.groupSize = groupSize;
+    this.groupShape = groupShape;
     this.direction = direction;
     this.scaredBehaviour = scaredBehaviour;
     this.respawnRate = respawnRate;
     this.critterSpeed = critterSpeed;
+    this.critterEnergy = critterEnergy;
     this.critterSize = critterSize;
     this.critterSpacing = critterSpacing;
-    this.totalCritters = Math.ceil(
-      globals.totalSpeciesEnergy / (this.critterSpeed * this.critterSize),
-    );
+    this.totalCritters = Math.ceil(globals.totalSpeciesEnergy / this.critterEnergy);
     this.totalGroups = Math.ceil(this.totalCritters / this.groupSize);
     this.scaredRadius = scaredRadius;
     this.safetyRadius = safetyRadius;
     this.calmSafetyNumber = calmSafetyNumber;
     this.scaredSafetyNumber = scaredSafetyNumber;
-    this.maxAge = maxAge;
 
     this.generateCritters();
   }
@@ -140,7 +173,6 @@ where:
     const endX = (this.id + 1) * (globals.canvasWidth / globals.numberOfSpecies);
     const startY = this.id * (globals.canvasHeight / globals.numberOfSpecies);
     const endY = (this.id + 1) * (globals.canvasHeight / globals.numberOfSpecies);
-
     // Number of groups in each axis
     const maxGroupsPerAxis = Math.ceil(Math.sqrt(this.totalGroups));
 
@@ -154,10 +186,9 @@ where:
         for (let y = 0; y < maxGroupsPerAxis; y += 1) {
           const xOffset = x * pixelsPerXGroup + startX;
           const yOffset = y * pixelsPerYGroup + startY;
-
           // Start with a naive approach
           const groupCrittersPositions = drawCrittersGroup(
-            'square_filled',
+            this.groupShape,
             this.groupSize,
             pixelsPerXGroup,
             pixelsPerYGroup,
@@ -183,6 +214,7 @@ where:
         this.scaredBehaviour,
         this.critterSpeed,
         this.critterSize,
+        this.critterEnergy,
         false,
       );
       critters.push(c);

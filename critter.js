@@ -12,6 +12,7 @@ const Critter = class {
     scaredBehaviour,
     speed,
     size,
+    energy,
     scared,
   ) {
     this.id = uuid();
@@ -21,9 +22,8 @@ const Critter = class {
     this.scaredBehaviour = scaredBehaviour;
     this.speed = speed;
     this.size = size;
+    this.energy = energy;
     this.scared = scared;
-    this.age = 0;
-    this.energy = this.size * this.speed;
   }
 
   move() {
@@ -75,7 +75,9 @@ const Critter = class {
       case 'turn_left':
         return this.direction - degreesToRads(90);
       case 'turn_right': // TODO: seems to be broken
-        return this.direction + degreesToRads(270);
+        return this.direction - degreesToRads(270);
+      case 'alternate':
+        return Math.random() > 0.5 ? this.direction - degreesToRads(90) : this.direction - degreesToRads(270);
       case 'random':
         return degreesToRads(180 * (Math.random() - 0.5));
       case 'nearest_neighbour': {

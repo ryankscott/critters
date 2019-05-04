@@ -88,9 +88,7 @@ input:invalid {
   border: 2px dashed red;
 }
 input[type="range"] {
-  margin: 5px;
   width: 160px;
-  padding: 5px;
   background-color: black;
 }
 input[type="range"]::-webkit-slider-runnable-track {
@@ -126,6 +124,7 @@ select {
 label {
   font-size: 18px;
   margin: 10px 5px 5px 5px;
+  padding: 5px;
   font-family: "dos437_web", monospace;
   font-size: 10px;
 }
@@ -135,13 +134,29 @@ label {
   flex-direction: row;
   align-content: center;
   justify-content: center;
-  width: 100%;
+  width: 600px;
+  border: 2px dashed white;  
+  padding: 15px 0px;
+  margin: 5px;
+}
+
+.menuRowTitle {
+  position: relative;
+  font-size: 10px;
+  background: black;
+  top: 17px;
+  left: -184px;
+  margin: 0px 5px;
+  padding: 0px 10px;
 }
 
 .menuCol {
   display: flex;
   flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
   margin: 0px 20px;
+  width: 200px;
 }
 
 .btn {
@@ -174,8 +189,22 @@ label {
   justify-content: center;
   align-items: center;
   margin-top: 120px;
+  transition: visibility 0s linear 0.7s, opacity 0.7s ease-in-out;
 }
 
 .survivalTime {
   color: white;
+}
+
+.inputRange {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: 0px;
+  padding: 0px;
+  width: 80%;
+}
+
+.inputRangeText {
+font-size: 6px;
 }

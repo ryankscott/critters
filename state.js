@@ -6,6 +6,7 @@ const state = {
   critters: [],
   directions: [],
   winningTeam: -1,
+  level: 1,
 };
 
 const resetState = () => {
@@ -14,6 +15,7 @@ const resetState = () => {
   state.critters = [];
   state.directions = [];
   state.winningTeam = -1;
+  state.level = 1;
 };
 
 export { state, resetState };

@@ -28,43 +28,73 @@
     </div>
     <div id="menu" class="menu">
       <h3> Create your species: </h3>
+      <p class="menuRowTitle"> Species attributes  </p>
       <div class="menuRow">
         <div class="menuCol">
-          <label for="name">Species Name:</label>
-          <input type="text" id="name" name="number" required>
+          <label for="name">Name:</label>
+          <input type="text" id="name" required>
+        </div>
+        <div class="menuCol">
+          <label for="colour">Colour:</label>
+          <input type="color" id="colour" value=chroma.random().toString() name="color" required width="20">
+        </div>
+      </div>
+      <p class="menuRowTitle"> Critter attributes  </p>
+      <div class="menuRow">
+        <div class="menuCol">
           <label for="groupSize">Group Size:</label>
           <input type="range" id="groupSize" name="groupSize" required min="1" max="100" step="1">
+          <div class = "inputRange">
+            <p class="inputRangeText">Small</p>
+            <p class="inputRangeText">Large</p>
+          </div>
           <label for="scaredBehaviour">Scared behaviour:</label>
           <select id="scaredBehaviours">
             <option value="do_nothing">Do nothing</option>
             <option value="go_backwards">Go backwards</option>
             <option value="turn_left">Turn left</option>
             <option value="turn_right">Turn right</option>
+            <option value="alternate">Alternate</option>
             <option value="random">Random</option>
             <option value="nearest_neighbour">Nearest Neighbour</option>
             <option value="towards_pack">Towards Pack</option>
           </select>
-          <label for="critterSize">Critter Size:</label>
-          <input type="range" id="critterSize" name="critterSize" required min="1" max="5" step="1">
-          <label for="critterSpacing">Critter Spacing:</label>
+          <label for="critterSpacing">Spacing:</label>
           <input type="range" id="critterSpacing" name="critterSpacing" required min="1" max="10"step="1" >
-
+          <div class = "inputRange">
+            <p class="inputRangeText">Close</p>
+            <p class="inputRangeText">Spaced</p>
+          </div>
         </div>
         <div class="menuCol">
-          <label for="colour">Colour:</label>
-          <input type="color" id="colour"   value=chroma.random().toString() name="color" required width="20">
-          <label for="respawnRate">Respawn Rate:</label>
-          <input type="range" id="respawnRate" name="respawnRate" required min="1" max="5" step="1">
-          <label for="critterSpeed">Critter Speed:</label>
-          <input type="range" id="critterSpeed" name="critterSpeed" required min="1" max="10" step="1">
+          <label for="energyUsage">Energy Usage:</label>
+          <input type="range" id="energyUsage" name="energuUsage" required min="1" max="5" step="1">
+          <div class = "inputRange">
+            <p class="inputRangeText">Fighting</p>
+            <p class="inputRangeText">Respawning</p>
+          </div>
+          <label for="critterSize">Size:</label>
+          <input type="range" id="critterSize" name="critterSize" required min="1" max="10" step="1">
+          <div class = "inputRange">
+            <p class="inputRangeText">Slow & Big</p>
+            <p class="inputRangeText">Fast & Small</p>
+          </div>
           <label for="scaredRadius">Scared Radius:</label>
           <input type="range" id="scaredRadius" name="scaredRadius" required min="1" max="100" step="1">
+          <div class = "inputRange">
+            <p class="inputRangeText">Small</p>
+            <p class="inputRangeText">Large</p>
+          </div>
           <label for="safetyRadius">Safety Radius:</label>
           <input type="range" id="safetyRadius" name="safetyRadius" required min="1" max="100" step="1">
+          <div class = "inputRange">
+            <p class="inputRangeText">Small</p>
+            <p class="inputRangeText">Large</p>
+          </div>
         </div>
       </div>
       <button class="btn" id="randomiseBtn">Randomise </button>
-      <button class="btn" id="createBtn">Create </button>
+      <button class="btn" id="startBtn"> Start </button>
     </div>
     <div id="gameOver" class="gameOver hidden">
       <pre id="youLost" class="hidden">
@@ -84,7 +114,6 @@ __   _______ _   _   _    _  _____ _   _
   \_/  \___/ \___/   \/  \/  \___/\_| \_/
       </pre>
         <p id="survivalTime" class="survivalTime">
-        You survived for: 
         </p>
       <button class="btn" id="playAgainBtn">Play Again? </button>
     </div> 
