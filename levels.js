@@ -11,9 +11,9 @@ const zergs = id => new Species(
   'random',
   1.5,
   4.0,
-  0.7,
-  6.0,
-  1.0,
+  0.8,
+  0.5,
+  0.8,
   20,
   100,
   30, // calmSafetyNumber
