@@ -129,13 +129,13 @@ const createTeam = () => {
     settings.name,
     settings.colour,
     settings.groupSize,
-    'square_filled',
+    'spiral',
     state.directions[state.species.length], // manually set direction
     settings.scaredBehaviours,
     settings.respawnRate * 2,
     settings.critterSpeed * 10,
     settings.critterSize * 2 + 1.0,
-    settings.critterSpacing * 10,
+    settings.critterSpacing * 10 + 2.0,
     settings.critterEnergy * 20,
     settings.scaredRadius,
     settings.safetyRadius,
@@ -156,7 +156,6 @@ const createTeam = () => {
       break;
   }
 
-  console.log(state.species);
   // Clear fields
   requiredFields.forEach((f) => {
     const item = document.getElementById(f);

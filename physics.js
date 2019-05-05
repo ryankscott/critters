@@ -95,20 +95,6 @@ const detectCollisions = () => {
 
       otherSpeciesCollisionCritters.forEach((o, index) => {
         if (o.length > 0) {
-          if (globals.debug) {
-            const cc = new Path2D();
-            cc.arc(
-              c.position.x,
-              c.position.y,
-              globals.collisionRadius,
-              0,
-              2 * Math.PI,
-            );
-            globals.ctx.fillStyle = 'rgba(255,0,0,0.4)';
-            globals.ctx.fill(cc);
-          }
-
-
           const otherSpeciesEnergy = otherSpecies[index].getEnergyInRegion(c.position, globals.collisionRadius);
           const currentSpeciesEnergy = t.getEnergyInRegion(c.position, globals.collisionRadius);
 
@@ -139,11 +125,11 @@ const detectCollisions = () => {
           collisionCircle.arc(
             c.position.x,
             c.position.y,
-            5,
+            globals.collisionRadius,
             0,
             2 * Math.PI,
           );
-          globals.ctx.fillStyle = 'rgba(255,255,255,0.6)';
+          globals.ctx.fillStyle = 'rgba(255,0,0,0.2)';
           globals.ctx.fill(collisionCircle);
         }
       });

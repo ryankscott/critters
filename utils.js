@@ -12,11 +12,11 @@ const generateRandomColour = () => {
   colours.push(chroma('#000000'));
 
   // Find the average contrast between all colours
-  const average = newColour => colours.reduce((p, c) => p + chroma.distance(c, newColour), 0) / colours.length;
+  const average = newColour => colours.reduce((p, c) => p + chroma.contrast(c, newColour), 0) / colours.length;
 
   let randomColour = chroma.random();
   // Keep generating colours until it's above threshold
-  while (average(randomColour) < 100) {
+  while (average(randomColour) < 7) {
     randomColour = chroma.random();
   }
   return randomColour;

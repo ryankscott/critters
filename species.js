@@ -4,7 +4,7 @@ import { globals } from './globals.js';
 import { state } from './state.js';
 import { determineEnergyInCollision } from './physics.js';
 
-
+// TODO: Should this be part of the class?
 const drawCrittersGroup = (
   shape,
   numberOfCritters,
@@ -15,47 +15,80 @@ const drawCrittersGroup = (
   yOffset,
 ) => {
   const critterPositions = [];
-  const shapeSize = 30;
+  const shapePixelsPerAxis = 30;
   switch (shape) {
     case 'square_filled': {
       const crittersInAxis = Math.ceil(Math.sqrt(numberOfCritters));
       for (let x = 0; x < crittersInAxis; x += 1) {
         for (let y = 0; y < crittersInAxis; y += 1) {
-          const xPos = xOffset + spacingPerCritter * (shapeSize / crittersInAxis) * x;
-          const yPos = yOffset + spacingPerCritter * (shapeSize / crittersInAxis) * y;
+          const xPos = xOffset + spacingPerCritter * (shapePixelsPerAxis / crittersInAxis) * x;
+          const yPos = yOffset + spacingPerCritter * (shapePixelsPerAxis / crittersInAxis) * y;
           critterPositions.push({ x: xPos, y: yPos });
         }
       }
       return critterPositions;
     }
-    case 'circle': {
+    case 'circle_empty': {
       const radsPerCritter = (2 * Math.PI) / numberOfCritters;
       for (let j = 0; j < numberOfCritters; j++) {
         critterPositions.push({
-          x: xOffset + shapeSize * Math.sin(radsPerCritter * j),
-          y: yOffset + shapeSize * Math.cos(radsPerCritter * j),
+          x: xOffset + shapePixelsPerAxis * Math.sin(radsPerCritter * j),
+          y: yOffset + shapePixelsPerAxis * Math.cos(radsPerCritter * j),
         });
       }
       return critterPositions;
     }
+    case 'circle_filled': { // TODO:fix me
+      const radsPerCritter = (2 * Math.PI) / numberOfCritters;
+      for (let j = 0; j < numberOfCritters / 2; j += 1) {
+        const randomSign = Math.random > 0.5 ? 1 : -1;
+        critterPositions.push({
+          x: xOffset + shapePixelsPerAxis / 2 * Math.sin(2 * j * radsPerCritter),
+          y: yOffset + shapePixelsPerAxis / 2 * Math.cos(2 * j * radsPerCritter),
+        });
+        critterPositions.push({
+          x: xOffset + (randomSign * Math.random() * shapePixelsPerAxis / 2) * Math.sin(2 * j * radsPerCritter),
+          y: yOffset + (randomSign * Math.random() * shapePixelsPerAxis / 2) * Math.cos(2 * j * radsPerCritter),
+        });
+      }
+      return critterPositions;
+    }
+
+    case 'spiral': {
+      const minCrittersPerRing = 5;
+      const numberOfRings = Math.ceil(numberOfCritters / minCrittersPerRing);
+      const radsPerCritter = ((2 * Math.PI) / minCrittersPerRing);
+      for (let x = 1; x < numberOfRings + 1; x += 1) {
+        for (let j = 0; j < minCrittersPerRing; j += 1) {
+          const randomOffset = x * Math.PI / 7;
+          critterPositions.push({
+            x: xOffset + spacingPerCritter + (4 * x * Math.sin((radsPerCritter * j + randomOffset))),
+            y: yOffset + spacingPerCritter + (4 * x * Math.cos((radsPerCritter * j + randomOffset))),
+          });
+        }
+      }
+      return critterPositions;
+    }
+
+
     case 'square_empty': {
       const crittersPerEdge = Math.ceil(numberOfCritters / 4);
       for (let j = 0; j < crittersPerEdge; j += 1) {
         critterPositions.push({
-          x: xOffset + spacingPerCritter + j * (shapeSize / crittersPerEdge),
+          x: xOffset + spacingPerCritter + j * (shapePixelsPerAxis / crittersPerEdge),
           y: yOffset,
         });
         critterPositions.push({
-          x: xOffset + shapeSize,
-          y: yOffset + spacingPerCritter + j * (shapeSize / crittersPerEdge),
+          x: xOffset + shapePixelsPerAxis,
+          y: yOffset + spacingPerCritter + j * (shapePixelsPerAxis / crittersPerEdge),
         });
         critterPositions.push({
           x: xOffset,
-          y: yOffset + spacingPerCritter + j * (shapeSize / crittersPerEdge),
+          y: yOffset + spacingPerCritter + j * (shapePixelsPerAxis / crittersPerEdge),
         });
         critterPositions.push({
-          x: xOffset + spacingPerCritter + j * (shapeSize / crittersPerEdge),
-          y: yOffset + shapeSize,
+          x: xOffset + spacingPerCritter + j * (shapePixelsPerAxis / crittersPerEdge),
+          y: yOffset + shapePixelsPerAxis,
         });
       }
       return critterPositions;
@@ -152,8 +185,8 @@ where:
       for (let i = 0; i < numberOfNewCritters; i++) {
         const randomCritter = this.critters[Math.floor(Math.random() * this.critters.length)];
         const respawnPosition = {
-          x: Math.min(globals.canvasWidth, randomCritter.position.x + Math.ceil((Math.random() - 0.5) * 150 * this.critterSpacing)),
-          y: Math.min(globals.canvasHeight, randomCritter.position.y + Math.ceil((Math.random() - 0.5) * 150 * this.critterSpacing)),
+          x: Math.min(globals.canvasWidth, randomCritter.position.x + Math.ceil((Math.random() - 0.5) * 20 * this.critterSpacing)),
+          y: Math.min(globals.canvasHeight, randomCritter.position.y + Math.ceil((Math.random() - 0.5) * 20 * this.critterSpacing)),
         };
         this.critters.push(new Critter(
           this,
@@ -162,6 +195,7 @@ where:
           this.scaredDirection,
           Math.random() < globals.mutationRate ? this.critterSpeed * 1.5 : randomCritter.speed, // Mutations
           Math.random() < globals.mutationRate ? this.critterSize * 1.5 : randomCritter.size, // Mutations
+          Math.random() < globals.mutationRate ? this.critterEnergy * 1.5 : randomCritter.energy, // Mutations
           false,
         ));
       }
