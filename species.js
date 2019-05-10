@@ -170,7 +170,7 @@ where:
  - K = carrying capacity (max size)
 */
   respawnCritters() {
-    if (state.cycle % 10 == 0) {
+    if (state.cycle % 10 === 0) {
       if (this.critters.length === 0) {
         return;
       }
