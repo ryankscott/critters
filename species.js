@@ -300,20 +300,30 @@ where:
               Math.ceil((Math.random() - 0.5) * 20 * this.critterSpacing),
           ),
         };
+        // TODO: this seems to fire critters off randomly
+        const randomDirection = () => {
+          if (Math.random() > 0.85) {
+            return this.direction;
+          }
+          if (Math.random() > 0.5) {
+            return this.direction * 1.02;
+          }
+          return this.direction / 1.02;
+        };
         this.critters.push(
           new Critter(
             this,
             respawnPosition,
-            this.direction,
+            randomDirection(),
             this.scaredDirection,
             Math.random() < globals.mutationRate
-              ? this.critterSpeed * 1.25
+              ? this.critterSpeed * 1.5
               : randomCritter.speed, // Mutations
             Math.random() < globals.mutationRate
-              ? this.critterSize * 1.25
+              ? this.critterSize * 1.5
               : randomCritter.size, // Mutations
             Math.random() < globals.mutationRate
-              ? this.critterEnergy * 1.25
+              ? this.critterEnergy * 1.5
               : randomCritter.energy, // Mutations
             false,
           ),

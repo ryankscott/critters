@@ -51,6 +51,7 @@ const Critter = class {
   }
 
   normalise() {
+    // speed
     if (this.speed < this.species.critterSpeed) {
       this.speed = Math.ceil(
         (this.speed *= globals.speedNormalisationConstant),
@@ -60,6 +61,7 @@ const Critter = class {
         (this.speed /= globals.speedNormalisationConstant),
       );
     }
+    // energy
     if (this.energy < this.species.critterSpeed * this.species.critterSize) {
       this.energy = Math.ceil(
         (this.energy *= globals.energyNormalisationConstant),
