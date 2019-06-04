@@ -1,124 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta content="utf-8" http-equiv="encoding" />
+    <link href="./styles.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.0.3/chroma.min.js"></script>
+    <script src="./main.js" type="module"></script>
+    <script src="state-machine.js"></script>
+    <title>Critters</title>
+  </head>
 
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
-  <meta content="utf-8" http-equiv="encoding" />
-  <link href="./styles.css" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.0.3/chroma.min.js"></script>
-  <script src="./main.js" type="module"></script>
-  <script src='state-machine.js'></script>
-  <title>Critters</title>
-</head>
-
-<body>
-  <div class="header">
-    <pre>
-            _ _   _                 
-           (_) | | |                
-   ___ _ __ _| |_| |_ ___ _ __ ___  
-  / __| '__| | __| __/ _ \ '__/ __| 
- | (__| |  | | |_| ||  __/ |  \__ \ 
-  \___|_|  |_|\__|\__\___|_|  |___/ 
-   </pre>   
+  <body>
+    <div class="header">
+      <pre>
+            _ _   _
+           (_) | | |
+   ___ _ __ _| |_| |_ ___ _ __ ___
+  / __| '__| | __| __/ _ \ '__/ __|
+ | (__| |  | | |_| ||  __/ |  \__ \
+  \___|_|  |_|\__|\__\___|_|  |___/
+   </pre
+      >
     </div>
-  <div class="app">
-    <div class="canvas hidden" id="canvasDiv">
-      <canvas id="canvas" height="600" width="800"> </canvas>
+    <div class="app">
+      <div class="content" id="content"></div>
     </div>
-    <div id="menu" class="menu">
-      <h3> Create your species: </h3>
-      <p class="menuRowTitle"> Species attributes  </p>
-      <div class="menuRow">
-        <div class="menuCol">
-          <label for="name">Name:</label>
-          <input type="text" id="name" required>
-        </div>
-        <div class="menuCol">
-          <label for="colour">Colour:</label>
-          <input type="color" id="colour" value=chroma.random().toString() name="color" required width="20">
-        </div>
-      </div>
-      <p class="menuRowTitle"> Critter attributes  </p>
-      <div class="menuRow">
-        <div class="menuCol">
-          <label for="groupSize">Group Size:</label>
-          <input type="range" id="groupSize" name="groupSize" required min="1" max="100" step="1">
-          <div class = "inputRange">
-            <p class="inputRangeText">Small</p>
-            <p class="inputRangeText">Large</p>
-          </div>
-          <label for="scaredBehaviour">Scared behaviour:</label>
-          <select id="scaredBehaviours">
-            <option value="do_nothing">Do nothing</option>
-            <option value="go_backwards">Go backwards</option>
-            <option value="turn_left">Turn left</option>
-            <option value="turn_right">Turn right</option>
-            <option value="alternate">Alternate</option>
-            <option value="random">Random</option>
-            <option value="nearest_neighbour">Nearest Neighbour</option>
-            <option value="towards_pack">Towards Pack</option>
-          </select>
-          <label for="critterSpacing">Spacing:</label>
-          <input type="range" id="critterSpacing" name="critterSpacing" required min="1" max="10"step="1" >
-          <div class = "inputRange">
-            <p class="inputRangeText">Close</p>
-            <p class="inputRangeText">Spaced</p>
-          </div>
-        </div>
-        <div class="menuCol">
-          <label for="energyUsage">Energy Usage:</label>
-          <input type="range" id="energyUsage" name="energyUsage" required min="1" max="5" step="1">
-          <div class = "inputRange">
-            <p class="inputRangeText">Fighting</p>
-            <p class="inputRangeText">Respawning</p>
-          </div>
-          <label for="critterSize">Size:</label>
-          <input type="range" id="critterSize" name="critterSize" required min="1" max="10" step="1">
-          <div class = "inputRange">
-            <p class="inputRangeText">Slow & Big</p>
-            <p class="inputRangeText">Fast & Small</p>
-          </div>
-          <label for="scaredRadius">Scared Radius:</label>
-          <input type="range" id="scaredRadius" name="scaredRadius" required min="1" max="100" step="1">
-          <div class = "inputRange">
-            <p class="inputRangeText">Small</p>
-            <p class="inputRangeText">Large</p>
-          </div>
-          <label for="safetyRadius">Safety Radius:</label>
-          <input type="range" id="safetyRadius" name="safetyRadius" required min="1" max="100" step="1">
-          <div class = "inputRange">
-            <p class="inputRangeText">Small</p>
-            <p class="inputRangeText">Large</p>
-          </div>
-        </div>
-      </div>
-      <button class="btn" id="randomiseBtn">Randomise </button>
-      <button class="btn" id="startBtn"> Start </button>
-    </div>
-    <div id="gameOver" class="gameOver hidden">
-      <pre id="youLost" class="hidden">
- __   _______ _   _   _     _____ _____ _____ 
- \ \ / /  _  | | | | | |   |  _  /  ___|_   _|
-  \ V /| | | | | | | | |   | | | \ `--.  | |  
-   \ / | | | | | | | | |   | | | |`--. \ | |  
-   | | \ \_/ / |_| | | |___\ \_/ /\__/ / | |  
-   \_/  \___/ \___/  \_____/\___/\____/  \_/  
-      </pre>
-      <pre id="youWon" class="hidden">
-__   _______ _   _   _    _  _____ _   _ 
-\ \ / /  _  | | | | | |  | ||  _  | \ | |
- \ V /| | | | | | | | |  | || | | |  \| |
-  \ / | | | | | | | | |/\| || | | | . ` |
-  | | \ \_/ / |_| | \  /\  /\ \_/ / |\  |
-  \_/  \___/ \___/   \/  \/  \___/\_| \_/
-      </pre>
-        <p id="survivalTime" class="survivalTime">
-        </p>
-      <button class="btn" id="playAgainBtn">Play Again? </button>
-    </div> 
-  </div>
-  </div>
-</body>
-
+  </body>
 </html>

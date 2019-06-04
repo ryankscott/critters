@@ -11,6 +11,7 @@ const drawCrittersGroup = (
   pixelsPerXAxis,
   pixelsPerYAxis,
   spacingPerCritter,
+  critterSize,
   xOffset,
   yOffset,
 ) => {
@@ -19,10 +20,15 @@ const drawCrittersGroup = (
   switch (shape) {
     case 'square_filled': {
       const crittersInAxis = Math.ceil(Math.sqrt(numberOfCritters));
+
       for (let x = 0; x < crittersInAxis; x += 1) {
         for (let y = 0; y < crittersInAxis; y += 1) {
-          const xPos = xOffset + spacingPerCritter * (shapePixelsPerAxis / crittersInAxis) * x;
-          const yPos = yOffset + spacingPerCritter * (shapePixelsPerAxis / crittersInAxis) * y;
+          const xPos =
+            xOffset +
+            spacingPerCritter * (shapePixelsPerAxis / crittersInAxis) * x;
+          const yPos =
+            yOffset +
+            spacingPerCritter * (shapePixelsPerAxis / crittersInAxis) * y;
           critterPositions.push({ x: xPos, y: yPos });
         }
       }
@@ -38,17 +44,90 @@ const drawCrittersGroup = (
       }
       return critterPositions;
     }
-    case 'circle_filled': { // TODO:fix me
-      const radsPerCritter = (2 * Math.PI) / numberOfCritters;
-      for (let j = 0; j < numberOfCritters / 2; j += 1) {
-        const randomSign = Math.random > 0.5 ? 1 : -1;
+    case 'circle_filled': {
+      const crittersPerRing = [0, 1];
+      let crittersPlaced = 1;
+      // Work out the critters per radius
+      while (crittersPlaced < numberOfCritters) {
+        const remainingCritters = numberOfCritters - crittersPlaced;
+        let desiredNextRing = Math.min(
+          crittersPerRing[crittersPerRing.length - 1] + 2,
+          remainingCritters,
+        );
+        // We don't want subsequent rings to be smaller than current ones
+        if (remainingCritters - desiredNextRing < desiredNextRing) {
+          desiredNextRing += remainingCritters - desiredNextRing;
+        }
+        crittersPerRing.push(desiredNextRing);
+        crittersPlaced = crittersPerRing.reduce((total, sum) => total + sum);
+      }
+      // Generate the different number of radii
+      let radii = [...Array(crittersPerRing.length).keys()];
+      radii = radii.map((r) => r + 1);
+
+      for (let i = 0; i < crittersPerRing.length; i += 1) {
+        const radsPerCritter = (2 * Math.PI) / crittersPerRing[i];
+        for (let j = 0; j < crittersPerRing[i]; j += 1) {
+          const radius = radii[i];
+          const angle = j * radsPerCritter;
+          critterPositions.push({
+            x: xOffset + 2 * radius * Math.cos(angle),
+            y: yOffset + 2 * radius * Math.sin(angle),
+          });
+        }
+      }
+
+      return critterPositions;
+    }
+
+    case 'chevron': {
+      const crittersPerEdge = Math.ceil(numberOfCritters / 3);
+      for (let j = 0; j < crittersPerEdge; j += 1) {
+        // top left to middle right
         critterPositions.push({
-          x: xOffset + shapePixelsPerAxis / 2 * Math.sin(2 * j * radsPerCritter),
-          y: yOffset + shapePixelsPerAxis / 2 * Math.cos(2 * j * radsPerCritter),
+          x: xOffset + j * (shapePixelsPerAxis / crittersPerEdge),
+          y: yOffset + j * 0.5 * (shapePixelsPerAxis / crittersPerEdge),
         });
+
+        // middle right to bottom left
         critterPositions.push({
-          x: xOffset + (randomSign * Math.random() * shapePixelsPerAxis / 2) * Math.sin(2 * j * radsPerCritter),
-          y: yOffset + (randomSign * Math.random() * shapePixelsPerAxis / 2) * Math.cos(2 * j * radsPerCritter),
+          x:
+            xOffset +
+            shapePixelsPerAxis -
+            j * (shapePixelsPerAxis / crittersPerEdge),
+          y:
+            yOffset +
+            shapePixelsPerAxis / 2 +
+            j * (shapePixelsPerAxis / crittersPerEdge),
+        });
+      }
+      return critterPositions;
+    }
+    case 'triangle_empty': {
+      const crittersPerEdge = Math.ceil(numberOfCritters / 3);
+      for (let j = 0; j < crittersPerEdge; j += 1) {
+        // bottom left to middle top
+        critterPositions.push({
+          x: xOffset + j * 0.5 * (shapePixelsPerAxis / crittersPerEdge),
+          y:
+            yOffset +
+            shapePixelsPerAxis -
+            j * (shapePixelsPerAxis / crittersPerEdge),
+        });
+
+        // middle top to bottom right
+        critterPositions.push({
+          x:
+            xOffset +
+            shapePixelsPerAxis / 2 +
+            j * 0.5 * (shapePixelsPerAxis / crittersPerEdge),
+          y: yOffset + j * (shapePixelsPerAxis / crittersPerEdge),
+        });
+
+        // bottom edge
+        critterPositions.push({
+          x: xOffset + j * (shapePixelsPerAxis / crittersPerEdge),
+          y: yOffset + shapePixelsPerAxis,
         });
       }
       return critterPositions;
@@ -57,37 +136,54 @@ const drawCrittersGroup = (
     case 'spiral': {
       const minCrittersPerRing = 5;
       const numberOfRings = Math.ceil(numberOfCritters / minCrittersPerRing);
-      const radsPerCritter = ((2 * Math.PI) / minCrittersPerRing);
+      const radsPerCritter = (2 * Math.PI) / minCrittersPerRing;
       for (let x = 1; x < numberOfRings + 1; x += 1) {
         for (let j = 0; j < minCrittersPerRing; j += 1) {
-          const randomOffset = x * Math.PI / 7;
+          const randomOffset = (x * Math.PI) / 7;
           critterPositions.push({
-            x: xOffset + spacingPerCritter + (4 * x * Math.sin((radsPerCritter * j + randomOffset))),
-            y: yOffset + spacingPerCritter + (4 * x * Math.cos((radsPerCritter * j + randomOffset))),
+            x:
+              xOffset +
+              spacingPerCritter +
+              4 * x * Math.sin(radsPerCritter * j + randomOffset),
+            y:
+              yOffset +
+              spacingPerCritter +
+              4 * x * Math.cos(radsPerCritter * j + randomOffset),
           });
         }
       }
       return critterPositions;
     }
 
-
     case 'square_empty': {
       const crittersPerEdge = Math.ceil(numberOfCritters / 4);
       for (let j = 0; j < crittersPerEdge; j += 1) {
         critterPositions.push({
-          x: xOffset + spacingPerCritter + j * (shapePixelsPerAxis / crittersPerEdge),
+          x:
+            xOffset +
+            spacingPerCritter +
+            j * (shapePixelsPerAxis / crittersPerEdge),
           y: yOffset,
         });
         critterPositions.push({
           x: xOffset + shapePixelsPerAxis,
-          y: yOffset + spacingPerCritter + j * (shapePixelsPerAxis / crittersPerEdge),
+          y:
+            yOffset +
+            spacingPerCritter +
+            j * (shapePixelsPerAxis / crittersPerEdge),
         });
         critterPositions.push({
           x: xOffset,
-          y: yOffset + spacingPerCritter + j * (shapePixelsPerAxis / crittersPerEdge),
+          y:
+            yOffset +
+            spacingPerCritter +
+            j * (shapePixelsPerAxis / crittersPerEdge),
         });
         critterPositions.push({
-          x: xOffset + spacingPerCritter + j * (shapePixelsPerAxis / crittersPerEdge),
+          x:
+            xOffset +
+            spacingPerCritter +
+            j * (shapePixelsPerAxis / crittersPerEdge),
           y: yOffset + shapePixelsPerAxis,
         });
       }
@@ -98,7 +194,6 @@ const drawCrittersGroup = (
   }
   return critterPositions;
 };
-
 
 /**
  *
@@ -113,6 +208,7 @@ const drawCrittersGroup = (
  * @param  {number} critterSpeed -the speed of each critter
  * @param  {number} critterSize - the size of each critter (integer)
  * @param  {number} critterSpacing - the distance around each critter in a group (integer)
+ * @param  {number} totalEnergy - the total amount of energy for a species (integer)
  * @param  {number} critterEnergy - the energy used for battle for critter (integer)
  * @param  {number} scaredRadius - the distance around a critter that's checked for enemy critters to determine if it's scared (integer)
  * @param  {number} safetyRadius - the distance around a critter that's checked for critters to determine if it's safe (integer)
@@ -134,11 +230,14 @@ const Species = class {
     critterSpeed,
     critterSize,
     critterSpacing,
+    totalEnergy,
     critterEnergy,
     scaredRadius,
     safetyRadius,
     calmSafetyNumber,
     scaredSafetyNumber,
+    description,
+    difficulty,
   ) {
     this.id = id;
     this.name = name;
@@ -152,14 +251,15 @@ const Species = class {
     this.critterEnergy = critterEnergy;
     this.critterSize = critterSize;
     this.critterSpacing = critterSpacing;
-    this.totalCritters = Math.ceil(globals.totalSpeciesEnergy / this.critterEnergy);
+    this.totalEnergy = totalEnergy;
+    this.totalCritters = Math.ceil(this.totalEnergy / this.critterEnergy);
     this.totalGroups = Math.ceil(this.totalCritters / this.groupSize);
     this.scaredRadius = scaredRadius;
     this.safetyRadius = safetyRadius;
     this.calmSafetyNumber = calmSafetyNumber;
     this.scaredSafetyNumber = scaredSafetyNumber;
-
-    this.generateCritters();
+    this.description = description;
+    this.difficulty = difficulty;
   }
 
   /*
@@ -174,39 +274,60 @@ where:
       if (this.critters.length === 0) {
         return;
       }
-      const rMax = (this.respawnRate / globals.respawnRateConstant);
+      const rMax = this.respawnRate / globals.respawnRateConstant;
       const N = this.getScore();
       const K = globals.totalSpeciesEnergy;
-      const amountOfEnergyLeft = (rMax * N * ((K - N) / K));
-      const numberOfNewCritters = Math.ceil(amountOfEnergyLeft / (this.critterSize * this.critterSpeed));
+      const amountOfEnergyLeft = rMax * N * ((K - N) / K);
+      const numberOfNewCritters = Math.ceil(
+        amountOfEnergyLeft / (this.critterSize * this.critterSpeed),
+      );
       if (numberOfNewCritters < 0) {
         return;
       }
       for (let i = 0; i < numberOfNewCritters; i++) {
-        const randomCritter = this.critters[Math.floor(Math.random() * this.critters.length)];
+        const randomCritter = this.critters[
+          Math.floor(Math.random() * this.critters.length)
+        ];
         const respawnPosition = {
-          x: Math.min(globals.canvasWidth, randomCritter.position.x + Math.ceil((Math.random() - 0.5) * 20 * this.critterSpacing)),
-          y: Math.min(globals.canvasHeight, randomCritter.position.y + Math.ceil((Math.random() - 0.5) * 20 * this.critterSpacing)),
+          x: Math.min(
+            globals.canvasWidth,
+            randomCritter.position.x +
+              Math.ceil((Math.random() - 0.5) * 20 * this.critterSpacing),
+          ),
+          y: Math.min(
+            globals.canvasHeight,
+            randomCritter.position.y +
+              Math.ceil((Math.random() - 0.5) * 20 * this.critterSpacing),
+          ),
         };
-        this.critters.push(new Critter(
-          this,
-          respawnPosition,
-          this.direction,
-          this.scaredDirection,
-          Math.random() < globals.mutationRate ? this.critterSpeed * 1.5 : randomCritter.speed, // Mutations
-          Math.random() < globals.mutationRate ? this.critterSize * 1.5 : randomCritter.size, // Mutations
-          Math.random() < globals.mutationRate ? this.critterEnergy * 1.5 : randomCritter.energy, // Mutations
-          false,
-        ));
+        this.critters.push(
+          new Critter(
+            this,
+            respawnPosition,
+            this.direction,
+            this.scaredDirection,
+            Math.random() < globals.mutationRate
+              ? this.critterSpeed * 1.25
+              : randomCritter.speed, // Mutations
+            Math.random() < globals.mutationRate
+              ? this.critterSize * 1.25
+              : randomCritter.size, // Mutations
+            Math.random() < globals.mutationRate
+              ? this.critterEnergy * 1.25
+              : randomCritter.energy, // Mutations
+            false,
+          ),
+        );
       }
     }
   }
 
   determineCritterPositions() {
-    const startX = this.id * (globals.canvasWidth / globals.numberOfSpecies);
-    const endX = (this.id + 1) * (globals.canvasWidth / globals.numberOfSpecies);
-    const startY = this.id * (globals.canvasHeight / globals.numberOfSpecies);
-    const endY = (this.id + 1) * (globals.canvasHeight / globals.numberOfSpecies);
+    const startX = this.id * (globals.canvasWidth / 2);
+    const endX = (this.id + 1) * (globals.canvasWidth / 2);
+    const startY = this.id * (globals.canvasHeight / 2);
+    const endY = (this.id + 1) * (globals.canvasHeight / 2);
+
     // Number of groups in each axis
     const maxGroupsPerAxis = Math.ceil(Math.sqrt(this.totalGroups));
 
@@ -227,6 +348,7 @@ where:
             pixelsPerXGroup,
             pixelsPerYGroup,
             this.critterSpacing,
+            this.critterSize,
             xOffset,
             yOffset,
           );
@@ -265,22 +387,26 @@ where:
       const dx = c.position.x - position.x;
       const dy = c.position.y - position.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      return distance < (Math.floor(c.size) + (radius));
+      return distance < Math.floor(c.size) + radius;
     });
   }
 
   getScore() {
-    const score = this.critters.reduce((acc, cv) => (acc + cv.energy), 0);
+    const score = this.critters.reduce((acc, cv) => acc + cv.energy, 0);
     return score;
   }
 
+  // The actual energy in a region
   getEnergyInRegion(position, radius) {
     const collisionCritters = this.getCrittersInRegion(position, radius);
-    return collisionCritters.reduce((acc, cv) => (determineEnergyInCollision(cv, position)), 0);
+    return collisionCritters.reduce(
+      (acc, cv) => determineEnergyInCollision(cv, position),
+      0,
+    );
   }
 
   getScaredCritters() {
-    return this.critters.filter(c => c.scared);
+    return this.critters.filter((c) => c.scared);
   }
 };
 export default Species;

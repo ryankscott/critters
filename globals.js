@@ -1,19 +1,14 @@
-
-const canvas = document.getElementById('canvas');
 const globals = {
   numberOfSpecies: 2,
   debug: false,
   collisionRadius: 30,
   rendering: true,
-  canvas,
-  ctx: canvas.getContext('2d'),
-  canvasHeight: canvas.height,
-  canvasWidth: canvas.width,
-  canvasOffsetLeft: canvas.offsetLeft,
-  canvasOffsetTop: canvas.offsetTop,
+  canvas: null,
+  canvasHeight: 600,
+  canvasWidth: 800,
   totalSpeciesEnergy: 500,
   energyChangeInConflict: 0.75,
-  speedChangeInConflict: 0.90,
+  speedChangeInConflict: 0.9,
   speedChangeWhenScared: 1.05,
   speedNormalisationConstant: 1.01,
   energyNormalisationConstant: 1.001,

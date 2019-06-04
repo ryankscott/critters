@@ -1,23 +1,43 @@
 @font-face {
-  font-family: "dos437_web";
+  font-family: 'dos437_web';
   src: url(https://funhappythings.pixelsaredead.com/dos437/DOS437Unicode.ttf);
+}
+
+:root {
+  --input-width: 640px;
+  --bg-color: #000084;
+  --alt-bg-color: #00aaaa;
+  --alt-bg-color-hover: #00cccc;
+  --default-text-color: #ffffff;
+  --alt-text-color: #000;
+  --alternative-text-color: #999999;
+  --default-input-bg-color: #dddddd;
+  --default-input-text-color: #222222;
+  --button-bg-color: var(--default-input-bg-color);
+  --button-text-color: var(--default-input-text-color);
+  --button-disabled-bg-color: #3f3f3f;
+  --button-disabled-text-color: #000000;
+  --button-hover-bg-color: #bbbbbb;
+  --select-bg-color: var(--default-input-bg-color);
+  --select-text-color: var(--default-input-text-color);
 }
 
 .app {
   display: flex;
   flex-direction: row;
-  border: solid 1px black;
   justify-content: center;
 }
 
-.body {
-  font-family: "DOS437_web", monospace;
+body {
+  font-family: 'DOS437_web', monospace;
+  background-color: var(--bg-color);
 }
 
-body {
-  font-family: "DOS437_web", monospace;
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   box-sizing: border-box;
-  background-color: black;
 }
 
 .header {
@@ -28,34 +48,41 @@ body {
   align-content: center;
 }
 
-.canvas {
+.canvasDiv {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin: 10px 0px;
+}
+
+.canvas {
+  border: 4px double white;
+  background-color: #000;
 }
 
 h1 {
-  color: white;
+  color: var(--default-text-color);
   font-size: 24px;
 }
 h2 {
-  color: white;
+  color: var(--default-text-color);
   font-size: 18px;
 }
 h3 {
-  color: white;
+  color: var(--default-text-color);
   font-size: 16px;
+  margin: 5px 0px;
 }
 pre {
-  color: white;
+  color: var(--default-text-color);
 }
 
 .menu {
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: white;
+  color: var(--default-text-color);
   padding: 2px;
   margin: 0px 5px;
   width: 100%;
@@ -64,55 +91,67 @@ pre {
   display: none !important;
 }
 
-input[type="text"] {
+input[type='text'] {
   margin: 5px;
-  width: 160px;
+  width: 200px;
   padding: 5px;
-  border: 2px dashed white;
-  background-color: black;
-  color: white;
-  font-family: "dos437_web", monospace;
+  border: 1px solid var(--bg-color);
+  background-color: var(--default-text-color);
+  color: black;
+  font-family: 'dos437_web', monospace;
   font-size: 10px;
 }
-input[type="number"] {
+
+input[type='number'] {
   margin: 5px;
-  width: 160px;
+  width: 200px;
   padding: 5px;
-  border: 2px dashed white;
-  background-color: black;
-  color: white;
-  font-family: "dos437_web", monospace;
+  border: 2px dashed var(--default-text-color);
+  background-color: var(--bg-color);
+  color: var(--default-text-color);
+  font-family: 'dos437_web', monospace;
   font-size: 10px;
 }
+
 input:invalid {
-  border: 2px dashed red;
+  /* border: 2px inset red; */
 }
-input[type="range"] {
-  width: 160px;
-  background-color: black;
+
+input[type='range'] {
+  width: 200px;
+  background-color: var(--alt-bg-color);
 }
-input[type="range"]::-webkit-slider-runnable-track {
+
+input[type='range']::-webkit-slider-runnable-track {
   width: 100%;
   cursor: pointer;
-  background-color: white
+  background-color: var(--default-text-color);
   color: black;
 }
 
-input[type="range"]::-moz-range-track {
+input[type='range']::-moz-range-track {
   width: 100%;
   cursor: pointer;
-  background-color: white;
+  background-color: var(--default-text-color);
   color: black;
 }
 
 select {
   margin: 5px;
   height: 30px;
-  width: 170px;
-  font-family: "dos437_web", monospace;
-  background-color: black;
-  color: white;
+  width: 200px;
+  font-family: 'dos437_web', monospace;
+  background-color: var(--select-bg-color);
+  color: var(--select-text-color);
   font-size: 10px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none; /* remove default arrow */
+  background-image: url('./assets/baseline-arrow_drop_down-24px.svg');
+  background-position: right;
+  background-repeat: no-repeat;
+  border: 0px;
+  box-shadow: 10px 8px 0px black;
 }
 
 #colour {
@@ -122,11 +161,10 @@ select {
 }
 
 label {
-  font-size: 18px;
-  margin: 10px 5px 5px 5px;
-  padding: 5px;
-  font-family: "dos437_web", monospace;
   font-size: 10px;
+  margin: 10px 0px 0px 0px;
+  font-family: 'dos437_web', monospace;
+  color: var(--alt-text-color);
 }
 
 .menuRow {
@@ -134,20 +172,26 @@ label {
   flex-direction: row;
   align-content: center;
   justify-content: center;
-  width: 600px;
-  border: 2px dashed white;  
-  padding: 15px 0px;
+  width: 640px;
+  border: 4px double var(--default-text-color);
+  padding: 10px 0px;
   margin: 5px;
+  background-color: var(--alt-bg-color);
+}
+
+.menuRowTitleContainer {
+  width: 640px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-content: flex-start;
 }
 
 .menuRowTitle {
   position: relative;
   font-size: 10px;
-  background: black;
-  top: 17px;
-  left: -184px;
-  margin: 0px 5px;
-  padding: 0px 10px;
+  color: var(--default-text-color);
+  margin: 15px 5px 0px 5px;
 }
 
 .menuCol {
@@ -156,30 +200,29 @@ label {
   justify-content: space-evenly;
   align-items: center;
   margin: 0px 20px;
-  width: 200px;
+  width: 240px;
 }
 
 .btn {
   margin: 10px 5px;
   padding: 10px 5px;
-  width: 130px;
+  width: 200px;
   height: 40px;
-  border: 1px solid white;
-  border-radius: 5px;
-  background-color: #222222;
-  color: #cccccc;
+  background-color: var(--button-bg-color);
+  box-shadow: 10px 8px 0px black;
+  color: var(--button-text-color);
   font-size: 10px;
-  font-family: "dos437_web", monospace;
+  border: 0px;
+  font-family: 'dos437_web', monospace;
 }
 
 .btn:hover {
   cursor: pointer;
-  background-color: black;
-  color: white;
+  background-color: var(--button-hover-bg-color);
 }
 .btn:disabled {
-  color: #dddddd;
-  background-color: #3f3f3f;
+  color: var(--button-disabled-text-color);
+  background-color: var(--button-disabled-bg-color);
   cursor: not-allowed;
 }
 
@@ -190,10 +233,7 @@ label {
   align-items: center;
   margin-top: 120px;
   transition: visibility 0s linear 0.7s, opacity 0.7s ease-in-out;
-}
-
-.survivalTime {
-  color: white;
+  color: var(--default-text-color);
 }
 
 .inputRange {
@@ -206,5 +246,33 @@ label {
 }
 
 .inputRangeText {
-font-size: 6px;
+  font-size: 8px;
+  color: var(--alt-text-color);
+}
+
+.levelsSelectWrapper {
+  display: flex;
+  flex-direction: row;
+  margin: 20px 10px;
+}
+
+.levelWrapper {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  margin: 5px;
+  border: 4px double var(--default-text-color);
+  background-color: var(--alt-bg-color);
+  width: 360px;
+  font-size: 10px;
+  padding: 10px 20px;
+  z-index: 999999;
+}
+
+.selected {
+  background-color: var(--alt-bg-color-hover);
+}
+
+.levelWrapper:hover {
+  background-color: var(--alt-bg-color-hover);
 }
